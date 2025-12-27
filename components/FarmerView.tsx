@@ -1,5 +1,5 @@
-﻿import React, { useState, useEffect, useMemo } from 'react';
-import { Farmer, FarmerDashboardWeather, MarketRate, Negotiation, ProductCategory, NegotiationStatus, Product, ProductType, ChatMessage, User } from '../types';
+﻿import React, { useState, useEffect, useMemo, useCallback } from 'react';
+import { Farmer, FarmerDashboardWeather, MarketRate, Negotiation, ProductCategory, NegotiationStatus, Product, ProductType, ChatMessage, User, CallStatus } from '../types';
 import { generateProductDetails } from '../services/geminiService';
 import { XIcon, LoaderIcon, PlusIcon } from './icons';
 import { useToast } from '../context/ToastContext';
@@ -8,6 +8,7 @@ import { NegotiationChat } from './NegotiationChat';
 import { FarmerWallet } from './FarmerWallet';
 import { firebaseService } from '../services/firebaseService';
 import { WeatherWidget } from './WeatherWidget';
+import { IncomingCallOverlay } from './IncomingCallOverlay';
 
 interface FarmerViewProps {
     products: Product[];
@@ -21,6 +22,7 @@ interface FarmerViewProps {
     onCounter: (negotiation: Negotiation) => void;
     onOpenChat: (negotiation: Negotiation) => void;
     onSendMessage: (negotiationId: string, text: string) => void;
+    onAcceptCall?: (negotiationId: string) => void;
 }
 
 type FormErrors = { [key in keyof Omit<Product, 'id' | 'farmerId' | 'imageUrl' | 'isVerified' | 'verificationFeedback'>]?: string } & { image?: string };
@@ -41,11 +43,14 @@ const fileToDataUrl = (file: File): Promise<string> =>
         reader.onerror = error => reject(error);
     });
 
-export const FarmerView = ({ products, negotiations, messages, currentUserId, currentUser, onAddNewProduct, onUpdateProduct, onRespond, onCounter, onOpenChat, onSendMessage }: FarmerViewProps) => {
+export const FarmerView = ({ products, negotiations, messages, currentUserId, currentUser, onAddNewProduct, onUpdateProduct, onRespond, onCounter, onOpenChat, onSendMessage, onAcceptCall }: FarmerViewProps) => {
     const [aiIsLoading, setAiIsLoading] = useState(false);
     const [formIsSubmitting, setFormIsSubmitting] = useState(false);
     const [imageFile, setImageFile] = useState<File | null>(null);
     const [imagePreviewUrl, setImagePreviewUrl] = useState<string | null>(null);
+    
+    // Incoming call state
+    const [incomingCall, setIncomingCall] = useState<Negotiation | null>(null);
 
     const [activeFormTab, setActiveFormTab] = useState<ProductType>(ProductType.Bulk);
     const initialFormState = { name: '', category: ProductCategory.Other, description: '', price: 0, quantity: 100, type: ProductType.Bulk };
@@ -114,6 +119,67 @@ export const FarmerView = ({ products, negotiations, messages, currentUserId, cu
         const unsub = firebaseService.subscribeUserProfiles(buyerIdsInOffers, setBuyerProfiles);
         return () => unsub();
     }, [buyerIdsInOffers]);
+
+    // ═══════════════════════════════════════════════════════════════════════════════
+    // INCOMING CALL LISTENER
+    // ═══════════════════════════════════════════════════════════════════════════════
+    useEffect(() => {
+        if (!currentUserId) return;
+        
+        const unsubscribe = firebaseService.subscribeToIncomingCalls(
+            currentUserId,
+            (incomingCalls) => {
+                // Show the first incoming call if any
+                if (incomingCalls.length > 0) {
+                    // Only show if the caller is not the current user
+                    const call = incomingCalls.find(c => c.callerId !== currentUserId);
+                    if (call) {
+                        setIncomingCall(call);
+                    } else {
+                        setIncomingCall(null);
+                    }
+                } else {
+                    setIncomingCall(null);
+                }
+            },
+            (error) => {
+                console.error('[FarmerView] Incoming call subscription error:', error);
+            }
+        );
+        
+        return () => unsubscribe();
+    }, [currentUserId]);
+
+    /**
+     * Handle accepting an incoming call
+     */
+    const handleAcceptCall = useCallback(async () => {
+        if (!incomingCall || !onAcceptCall) return;
+        
+        try {
+            await firebaseService.acceptCall(incomingCall.id);
+            setIncomingCall(null);
+            onAcceptCall(incomingCall.id);
+        } catch (error) {
+            console.error('[FarmerView] Error accepting call:', error);
+            showToast('Failed to accept call', 'error');
+        }
+    }, [incomingCall, onAcceptCall, showToast]);
+
+    /**
+     * Handle declining an incoming call
+     */
+    const handleDeclineCall = useCallback(async () => {
+        if (!incomingCall) return;
+        
+        try {
+            await firebaseService.declineCall(incomingCall.id);
+            setIncomingCall(null);
+            showToast('Call declined', 'info');
+        } catch (error) {
+            console.error('[FarmerView] Error declining call:', error);
+        }
+    }, [incomingCall, showToast]);
 
     useEffect(() => {
         setNewProductForm(prev => ({ ...prev, type: activeFormTab }));
@@ -917,6 +983,17 @@ export const FarmerView = ({ products, negotiations, messages, currentUserId, cu
                         </form>
                     </div>
                 </div>
+            )}
+
+            {/* Incoming Call Overlay */}
+            {incomingCall && incomingCall.callerId && (
+                <IncomingCallOverlay
+                    negotiation={incomingCall}
+                    callerName={incomingCall.callerName || 'Buyer'}
+                    productName={incomingCall.productName || 'Product'}
+                    onAccept={handleAcceptCall}
+                    onDecline={handleDeclineCall}
+                />
             )}
         </div>
     );

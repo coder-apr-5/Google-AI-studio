@@ -38,6 +38,17 @@ export interface Product {
   type: ProductType;
   isVerified: boolean;
   verificationFeedback?: string;
+  // Dynamic pricing data from location-aware price engine
+  farmerLocation?: {
+    state: string;
+    district: string;
+  };
+  priceEngineData?: {
+    floorPrice: number;
+    targetPrice: number;
+    priceSource: 'district-mandi' | 'state-average' | 'national-fallback';
+    isVerified: boolean;
+  };
 }
 
 export interface CartItem extends Product {
@@ -58,6 +69,16 @@ export enum OrderStatus {
   Processing = 'Processing',
   Shipped = 'Shipped',
   Delivered = 'Delivered',
+}
+
+/** Call status for 1-on-1 voice/video calls */
+export enum CallStatus {
+  Idle = 'idle',
+  Ringing = 'ringing',
+  Ongoing = 'ongoing',
+  Ended = 'ended',
+  Declined = 'declined',
+  Missed = 'missed',
 }
 
 export interface Negotiation {
@@ -84,6 +105,11 @@ export interface Negotiation {
     state?: string;
     district?: string;
   };
+  // Voice/Video call fields
+  callStatus?: CallStatus;
+  callerId?: string;
+  callerName?: string;
+  callStartedAt?: Date;
 }
 
 export type MessageStatus = 'sending' | 'sent' | 'failed';
@@ -92,9 +118,11 @@ export interface ChatMessage {
   id: string;
   negotiationId: string;
   senderId: string; // e.g., 'b1' for buyer, 'f1' for farmer
+  recipientId?: string; // The other participant in the conversation
   text: string;
   timestamp: Date;
   status?: MessageStatus; // Optional for backward compatibility
+  read?: boolean; // Track if message has been read
 }
 
 export interface BotChatMessage {
@@ -180,4 +208,75 @@ export interface FarmerWallet {
   farmerId: string;
   totalBalance: number;
   lastUpdated: Date;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════════
+// MANDI PRICE DATA (Synced from Agmarknet via Scraper)
+// ═══════════════════════════════════════════════════════════════════════════════
+
+/**
+ * Mandi price document structure - synced from Agmarknet government portal
+ * Document ID format: {state}_{district}_{market}_{commodity}
+ */
+export interface MandiPriceDoc {
+  /** State name (e.g., "West Bengal") */
+  state: string;
+  /** District name (e.g., "Kolkata") */
+  district: string;
+  /** Market/Mandi name (e.g., "Sealdah") */
+  market: string;
+  /** Commodity name (e.g., "Rice", "Wheat", "Potato") */
+  commodity: string;
+  /** Variety of the commodity (e.g., "Basmati", "Common") */
+  variety: string;
+  /** Quality grade (e.g., "FAQ", "Grade-A") */
+  grade: string;
+  /** Minimum price in ₹ per quintal */
+  minPrice: number | null;
+  /** Maximum price in ₹ per quintal */
+  maxPrice: number | null;
+  /** Modal (most common) price in ₹ per quintal */
+  modalPrice: number | null;
+  /** Date when this price was reported (ISO string) */
+  reportDate: string;
+  /** Data source identifier */
+  source: 'agmarknet' | 'manual' | 'api';
+  /** Original source URL */
+  sourceUrl?: string;
+  /** When this record was last synced/updated (ISO string) */
+  lastUpdated: string;
+  /** Whether this data has been verified/validated */
+  isVerified: boolean;
+  /** Price unit for display (e.g., "INR/Quintal") */
+  priceUnit: string;
+}
+
+/**
+ * Simplified mandi rate for display in widgets
+ */
+export interface MandiRateDisplay {
+  commodity: string;
+  market: string;
+  pricePerQuintal: number;
+  pricePerKg: number;
+  change24h?: number;
+  trend: MarketTrend;
+  lastUpdated: Date;
+  isVerified: boolean;
+}
+
+/**
+ * Convert MandiPriceDoc to per-kg pricing for app usage
+ */
+export function mandiDocToRateDisplay(doc: MandiPriceDoc): MandiRateDisplay {
+  const pricePerQuintal = doc.modalPrice ?? doc.maxPrice ?? doc.minPrice ?? 0;
+  return {
+    commodity: doc.commodity,
+    market: doc.market,
+    pricePerQuintal,
+    pricePerKg: Math.round((pricePerQuintal / 100) * 100) / 100, // Quintal = 100kg
+    trend: 'flat', // Would need historical data to calculate
+    lastUpdated: new Date(doc.lastUpdated),
+    isVerified: doc.isVerified,
+  };
 }

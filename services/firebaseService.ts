@@ -24,10 +24,12 @@ import {
   ChatMessage,
   Farmer,
   FarmerDashboardWeather,
+  MandiPriceDoc,
   MarketRate,
   Negotiation,
   User,
   UserRole,
+  CallStatus,
   type Product,
 } from '../types';
 
@@ -582,9 +584,15 @@ export const firebaseService = {
   }): Promise<void> {
     const { negotiation, senderId, text } = params;
     
+    // Determine recipientId: the other participant in the negotiation
+    const recipientId = senderId === negotiation.buyerId 
+      ? negotiation.farmerId 
+      : negotiation.buyerId;
+    
     console.log('[sendMessage] Sending message:', {
       negotiationId: negotiation.id,
       senderId,
+      recipientId,
       buyerId: negotiation.buyerId,
       farmerId: negotiation.farmerId,
       textPreview: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
@@ -595,8 +603,12 @@ export const firebaseService = {
       buyerId: negotiation.buyerId,
       farmerId: negotiation.farmerId,
       senderId,
+      recipientId, // Added for notification filtering
+      participants: [negotiation.buyerId, negotiation.farmerId], // Array for easier querying
       text,
       timestamp: serverTimestamp(),
+      createdAt: serverTimestamp(),
+      read: false, // Track read status for notifications
     });
     
     console.log('[sendMessage] Message created with ID:', messageDoc.id);
@@ -604,6 +616,8 @@ export const firebaseService = {
     await updateDoc(doc(db, 'negotiations', negotiation.id), {
       lastUpdated: serverTimestamp(),
       updatedAt: serverTimestamp(),
+      lastMessage: text.substring(0, 100), // Preview of last message
+      lastMessageSenderId: senderId,
     });
     
     console.log('[sendMessage] Negotiation lastUpdated refreshed');
@@ -878,5 +892,283 @@ export const firebaseService = {
     } catch {
       return null;
     }
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // MANDI PRICES (Synced from Agmarknet via Scraper)
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Subscribe to live mandi prices from Firestore
+   * Prices are synced from Agmarknet via the browser scraper
+   */
+  subscribeMandiPrices(
+    onChange: (prices: MandiPriceDoc[]) => void,
+    filters?: { state?: string; district?: string; commodity?: string }
+  ): () => void {
+    let q = query(collection(db, 'mandiPrices'));
+
+    // Apply filters if provided
+    if (filters?.state) {
+      q = query(q, where('state', '==', filters.state));
+    }
+    if (filters?.district) {
+      q = query(q, where('district', '==', filters.district));
+    }
+    if (filters?.commodity) {
+      q = query(q, where('commodity', '==', filters.commodity));
+    }
+
+    return onSnapshot(
+      q,
+      (snap) => {
+        const prices: MandiPriceDoc[] = snap.docs.map((d) => {
+          const data = d.data() as any;
+          return {
+            state: data.state ?? '',
+            district: data.district ?? '',
+            market: data.market ?? '',
+            commodity: data.commodity ?? '',
+            variety: data.variety ?? '',
+            grade: data.grade ?? '',
+            minPrice: data.minPrice ?? null,
+            maxPrice: data.maxPrice ?? null,
+            modalPrice: data.modalPrice ?? null,
+            reportDate: data.reportDate ?? '',
+            source: data.source ?? 'agmarknet',
+            sourceUrl: data.sourceUrl,
+            lastUpdated: data.lastUpdated ?? new Date().toISOString(),
+            isVerified: data.isVerified ?? false,
+            priceUnit: data.priceUnit ?? 'INR/Quintal',
+          } satisfies MandiPriceDoc;
+        });
+        onChange(prices);
+      },
+      (err) => {
+        console.error('[Firebase] Error subscribing to mandi prices:', err);
+        onChange([]);
+      }
+    );
+  },
+
+  /**
+   * Get mandi price for a specific commodity (for price validation)
+   */
+  async getMandiPriceForCommodity(
+    commodity: string,
+    state?: string,
+    district?: string
+  ): Promise<MandiPriceDoc | null> {
+    try {
+      const constraints: ReturnType<typeof where>[] = [where('commodity', '==', commodity)];
+      if (state) constraints.push(where('state', '==', state));
+      if (district) constraints.push(where('district', '==', district));
+
+      const q = query(collection(db, 'mandiPrices'), ...constraints, limit(1));
+      const snap = await getDocs(q);
+
+      if (snap.empty) return null;
+
+      const data = snap.docs[0].data() as any;
+      return {
+        state: data.state ?? '',
+        district: data.district ?? '',
+        market: data.market ?? '',
+        commodity: data.commodity ?? '',
+        variety: data.variety ?? '',
+        grade: data.grade ?? '',
+        minPrice: data.minPrice ?? null,
+        maxPrice: data.maxPrice ?? null,
+        modalPrice: data.modalPrice ?? null,
+        reportDate: data.reportDate ?? '',
+        source: data.source ?? 'agmarknet',
+        sourceUrl: data.sourceUrl,
+        lastUpdated: data.lastUpdated ?? new Date().toISOString(),
+        isVerified: data.isVerified ?? false,
+        priceUnit: data.priceUnit ?? 'INR/Quintal',
+      } satisfies MandiPriceDoc;
+    } catch (err) {
+      console.error('[Firebase] Error fetching mandi price:', err);
+      return null;
+    }
+  },
+
+  /**
+   * Get floor price (minimum acceptable) for negotiation validation
+   * Returns price in ₹ per kg (converts from quintal)
+   */
+  async getFloorPricePerKg(
+    commodity: string,
+    state?: string,
+    district?: string
+  ): Promise<{ floorPrice: number; targetPrice: number; isVerified: boolean; source: string } | null> {
+    const mandiPrice = await this.getMandiPriceForCommodity(commodity, state, district);
+    if (!mandiPrice || mandiPrice.modalPrice === null) return null;
+
+    // Convert from ₹/quintal to ₹/kg (1 quintal = 100 kg)
+    const modalPricePerKg = mandiPrice.modalPrice / 100;
+    const minPricePerKg = (mandiPrice.minPrice ?? mandiPrice.modalPrice) / 100;
+
+    return {
+      floorPrice: Math.round(minPricePerKg * 100) / 100,
+      targetPrice: Math.round(modalPricePerKg * 100) / 100,
+      isVerified: mandiPrice.isVerified,
+      source: `${mandiPrice.market}, ${mandiPrice.district} (${mandiPrice.source})`,
+    };
+  },
+
+  // ═══════════════════════════════════════════════════════════════════════════════
+  // VOICE/VIDEO CALL FUNCTIONS
+  // ═══════════════════════════════════════════════════════════════════════════════
+
+  /**
+   * Start a call - updates negotiation with ringing status
+   * Called by the buyer when clicking "Call Farmer"
+   */
+  async startCall(
+    negotiationId: string,
+    callerId: string,
+    callerName: string
+  ): Promise<{ success: boolean; error?: string }> {
+    try {
+      await updateDoc(doc(db, 'negotiations', negotiationId), {
+        callStatus: CallStatus.Ringing,
+        callerId,
+        callerName,
+        callStartedAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      });
+      return { success: true };
+    } catch (error: any) {
+      console.error('[Firebase] Error starting call:', error);
+      return { success: false, error: error.message || 'Failed to start call' };
+    }
+  },
+
+  /**
+   * Accept a call - updates negotiation with ongoing status
+   * Called by the farmer when accepting an incoming call
+   */
+  async acceptCall(negotiationId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await updateDoc(doc(db, 'negotiations', negotiationId), {
+        callStatus: CallStatus.Ongoing,
+        updatedAt: serverTimestamp(),
+      });
+      return { success: true };
+    } catch (error: any) {
+      console.error('[Firebase] Error accepting call:', error);
+      return { success: false, error: error.message || 'Failed to accept call' };
+    }
+  },
+
+  /**
+   * Decline a call - updates negotiation with declined status
+   * Called by the farmer when declining an incoming call
+   */
+  async declineCall(negotiationId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await updateDoc(doc(db, 'negotiations', negotiationId), {
+        callStatus: CallStatus.Declined,
+        callerId: null,
+        callerName: null,
+        updatedAt: serverTimestamp(),
+      });
+      return { success: true };
+    } catch (error: any) {
+      console.error('[Firebase] Error declining call:', error);
+      return { success: false, error: error.message || 'Failed to decline call' };
+    }
+  },
+
+  /**
+   * End a call - updates negotiation with ended status
+   * Called when either party leaves the call room
+   */
+  async endCall(negotiationId: string): Promise<{ success: boolean; error?: string }> {
+    try {
+      await updateDoc(doc(db, 'negotiations', negotiationId), {
+        callStatus: CallStatus.Ended,
+        callerId: null,
+        callerName: null,
+        updatedAt: serverTimestamp(),
+      });
+      return { success: true };
+    } catch (error: any) {
+      console.error('[Firebase] Error ending call:', error);
+      return { success: false, error: error.message || 'Failed to end call' };
+    }
+  },
+
+  /**
+   * Reset call status back to idle
+   * Used after a call has ended to allow new calls
+   */
+  async resetCallStatus(negotiationId: string): Promise<void> {
+    try {
+      await updateDoc(doc(db, 'negotiations', negotiationId), {
+        callStatus: CallStatus.Idle,
+        callerId: null,
+        callerName: null,
+        updatedAt: serverTimestamp(),
+      });
+    } catch (error) {
+      console.error('[Firebase] Error resetting call status:', error);
+    }
+  },
+
+  /**
+   * Subscribe to incoming calls for a specific user (farmer)
+   * Returns negotiations where the user is the farmer and callStatus is 'ringing'
+   */
+  subscribeToIncomingCalls(
+    farmerId: string,
+    onChange: (incomingCalls: Negotiation[]) => void,
+    onError?: (error: Error) => void
+  ): () => void {
+    const q = query(
+      collection(db, 'negotiations'),
+      where('farmerId', '==', farmerId),
+      where('callStatus', '==', CallStatus.Ringing)
+    );
+
+    return onSnapshot(
+      q,
+      (snapshot) => {
+        const calls: Negotiation[] = snapshot.docs.map((docSnap) => {
+          const data = docSnap.data();
+          return {
+            id: docSnap.id,
+            productId: data.productId,
+            productName: data.productName,
+            productImageUrl: data.productImageUrl,
+            buyerId: data.buyerId,
+            farmerId: data.farmerId,
+            initialPrice: data.initialPrice,
+            offeredPrice: data.offeredPrice,
+            counterPrice: data.counterPrice,
+            quantity: data.quantity,
+            status: data.status,
+            notes: data.notes,
+            lastUpdated: toDate(data.lastUpdated),
+            floorPrice: data.floorPrice,
+            targetPrice: data.targetPrice,
+            priceSource: data.priceSource,
+            priceVerified: data.priceVerified,
+            qualityGrade: data.qualityGrade,
+            farmerLocation: data.farmerLocation,
+            callStatus: data.callStatus,
+            callerId: data.callerId,
+            callerName: data.callerName,
+            callStartedAt: toDate(data.callStartedAt),
+          } as Negotiation;
+        });
+        onChange(calls);
+      },
+      (error) => {
+        console.error('[Firebase] Error subscribing to incoming calls:', error);
+        onError?.(error);
+      }
+    );
   },
 };

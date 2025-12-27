@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Product, Negotiation, ProductType, NegotiationStatus, ProductCategory, Farmer, ChatMessage } from '../types';
+import { Product, Negotiation, ProductType, NegotiationStatus, ProductCategory, Farmer, ChatMessage, User } from '../types';
 import { XIcon } from './icons';
 import { ProductDetailPage } from './ProductDetailPage';
 import { BuyerNegotiationConsole } from './BuyerNegotiationConsole';
@@ -12,10 +12,12 @@ interface BuyerViewProps {
     negotiations: Negotiation[];
     messages: ChatMessage[];
     currentUserId: string;
+    currentUser: User;
     onStartNegotiation: (product: Product) => void;
     onRespondToCounter: (negotiationId: string, response: 'Accepted' | 'Rejected') => void;
     onOpenChat: (negotiation: Negotiation) => void;
     onSendMessage: (negotiationId: string, text: string) => void;
+    onStartCall?: (negotiationId: string) => void;
     wishlist: string[];
     onToggleWishlist: (productId: string) => void;
     farmers: Farmer[];
@@ -29,10 +31,12 @@ export const BuyerView = ({
     negotiations,
     messages,
     currentUserId,
+    currentUser,
     onStartNegotiation, 
     onRespondToCounter, 
     onOpenChat,
     onSendMessage,
+    onStartCall,
     wishlist, 
     onToggleWishlist, 
     farmers, 
@@ -581,12 +585,14 @@ export const BuyerView = ({
                     farmer={farmerMap.get(negotiations.find(n => n.id === activeNegotiationId)?.farmerId!)}
                     messages={messages.filter(m => m.negotiationId === activeNegotiationId)}
                     currentUserId={currentUserId}
+                    currentUser={currentUser}
                     onClose={() => setActiveNegotiationId(null)}
                     onSendMessage={(text) => {
                         if (activeNegotiationId) {
                             onSendMessage(activeNegotiationId, text);
                         }
                     }}
+                    onStartCall={onStartCall}
                     onUpdateOffer={async (price, quantity) => {
                         if (activeNegotiationId) {
                             try {

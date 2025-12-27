@@ -1,7 +1,7 @@
 
 
-import React, { useState, useMemo, useEffect } from 'react';
-import { UserRole, Product, CartItem, Negotiation, NegotiationStatus, ProductType, ChatMessage, BotChatMessage, Farmer, User } from './types';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { UserRole, Product, CartItem, Negotiation, NegotiationStatus, ProductType, ChatMessage, BotChatMessage, Farmer, User, CallStatus } from './types';
 import type { Role } from './components/landing';
 import { getChatResponse, verifyFarmerProfile, isUsingFallbackKey } from './services/geminiService';
 import { LandingPage } from './components/LandingPage';
@@ -22,6 +22,7 @@ import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import { firebaseService } from './services/firebaseService';
 import { FirestoreErrorBoundary } from './components/ErrorBoundary';
+import { CallPage } from './components/CallPage';
 
 export default function App() {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -57,6 +58,9 @@ export default function App() {
     ]);
     const [botIsLoading, setBotIsLoading] = useState(false);
     const [isLiveAssistantOpen, setIsLiveAssistantOpen] = useState(false);
+    
+    // Voice/Video Call State
+    const [activeCallNegotiationId, setActiveCallNegotiationId] = useState<string | null>(null);
     
     const { showToast } = useToast();
 
@@ -244,6 +248,15 @@ export default function App() {
         
         showToast(`Switched to ${nextRole} view.`, 'info');
     };
+    
+    // Voice/Video Call Handlers
+    const handleStartCall = useCallback((negotiationId: string) => {
+        setActiveCallNegotiationId(negotiationId);
+    }, []);
+    
+    const handleLeaveCall = useCallback(() => {
+        setActiveCallNegotiationId(null);
+    }, []);
     
     const handleAddToCart = (product: Product, quantity: number = 1) => {
         setCart(prevCart => {
@@ -616,6 +629,7 @@ export default function App() {
                          onCounter: handleOpenNegotiation, 
                          onOpenChat: handleOpenChat, 
                          onSendMessage: handleSendMessageToNegotiation,
+                         onAcceptCall: handleStartCall,
                          products: products.filter(p => p.farmerId === currentUser.uid), 
                          negotiations: negotiations.filter(n => n.farmerId === currentUser.uid),
                          messages: messages,
@@ -627,7 +641,7 @@ export default function App() {
         }
         return (
             <FirestoreErrorBoundary fallbackMessage="Syncing with marketplace. This usually takes 2-3 minutes during initial setup.">
-                <BuyerView {...{products, negotiations: negotiations.filter(n => n.buyerId === currentUser.uid), messages, currentUserId: currentUser.uid, onStartNegotiation: handleOpenNegotiation, onRespondToCounter: handleNegotiationResponse, onOpenChat: handleOpenChat, onSendMessage: handleSendMessageToNegotiation, wishlist, onToggleWishlist: handleToggleWishlist, farmers, onViewFarmerProfile: handleViewFarmerProfile, onSwitchRole: handleSwitchRole, isLoadingProducts}} />
+                <BuyerView {...{products, negotiations: negotiations.filter(n => n.buyerId === currentUser.uid), messages, currentUserId: currentUser.uid, currentUser: currentUser, onStartNegotiation: handleOpenNegotiation, onRespondToCounter: handleNegotiationResponse, onOpenChat: handleOpenChat, onSendMessage: handleSendMessageToNegotiation, onStartCall: handleStartCall, wishlist, onToggleWishlist: handleToggleWishlist, farmers, onViewFarmerProfile: handleViewFarmerProfile, onSwitchRole: handleSwitchRole, isLoadingProducts}} />
             </FirestoreErrorBoundary>
         );
     }
@@ -650,6 +664,23 @@ export default function App() {
                     onAuthenticated={handleAuthSuccess}
                 />
             </>
+        );
+    }
+
+    // Render CallPage if a call is active
+    if (activeCallNegotiationId && currentUser) {
+        const activeNeg = negotiations.find(n => n.id === activeCallNegotiationId);
+        const otherPartyName = currentUser.role === UserRole.Buyer 
+            ? farmers.find(f => f.id === activeNeg?.farmerId)?.name 
+            : undefined; // For farmer, we don't have buyer name readily available
+        return (
+            <CallPage
+                negotiationId={activeCallNegotiationId}
+                currentUser={currentUser}
+                onLeaveCall={handleLeaveCall}
+                productName={activeNeg?.productName}
+                otherPartyName={otherPartyName}
+            />
         );
     }
 

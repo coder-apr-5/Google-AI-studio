@@ -1,17 +1,20 @@
 import React, { useState, useRef, useEffect, useMemo } from 'react';
-import { Negotiation, NegotiationStatus, ChatMessage, Farmer, MIN_BULK_QUANTITY_KG } from '../types';
+import { Negotiation, NegotiationStatus, ChatMessage, Farmer, MIN_BULK_QUANTITY_KG, CallStatus, User } from '../types';
 import { classifyOffer, type OfferClassification, type PriceBand } from '../services/mandiPriceService';
+import { firebaseService } from '../services/firebaseService';
 
 interface BuyerNegotiationConsoleProps {
     negotiation: Negotiation;
     farmer?: Farmer;
     messages: ChatMessage[];
     currentUserId: string;
+    currentUser: User;
     onClose: () => void;
     onSendMessage: (text: string) => void;
     onUpdateOffer: (price: number, quantity: number) => void;
     onAcceptOffer: () => void;
     onDeclineOffer: () => void;
+    onStartCall?: (negotiationId: string) => void;
 }
 
 export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = ({
@@ -19,15 +22,18 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
     farmer,
     messages,
     currentUserId,
+    currentUser,
     onClose,
     onSendMessage,
     onUpdateOffer,
     onAcceptOffer,
     onDeclineOffer,
+    onStartCall,
 }) => {
     const [messageInput, setMessageInput] = useState('');
     const [counterPrice, setCounterPrice] = useState(negotiation.offeredPrice);
     const [counterQuantity, setCounterQuantity] = useState(negotiation.quantity);
+    const [isStartingCall, setIsStartingCall] = useState(false);
     const chatContainerRef = useRef<HTMLDivElement>(null);
 
     // Get price band from negotiation (computed on creation)
@@ -79,6 +85,32 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
         onUpdateOffer(counterPrice, counterQuantity);
     };
 
+    /**
+     * Start a video/voice call with the farmer
+     */
+    const handleStartCall = async () => {
+        if (isStartingCall || !onStartCall) return;
+        
+        setIsStartingCall(true);
+        try {
+            const result = await firebaseService.startCall(
+                negotiation.id,
+                currentUser.uid,
+                currentUser.name || 'Buyer'
+            );
+            
+            if (result.success) {
+                onStartCall(negotiation.id);
+            } else {
+                console.error('[BuyerNegotiationConsole] Failed to start call:', result.error);
+            }
+        } catch (error) {
+            console.error('[BuyerNegotiationConsole] Error starting call:', error);
+        } finally {
+            setIsStartingCall(false);
+        }
+    };
+
     const handleKeyPress = (e: React.KeyboardEvent) => {
         if (e.key === 'Enter' && !e.shiftKey) {
             e.preventDefault();
@@ -117,10 +149,33 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
                         </div>
                     </div>
                 </div>
-                <button className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs sm:text-sm font-bold hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
-                    <span className="material-symbols-outlined text-[20px]">help</span>
-                    <span>Help</span>
-                </button>
+                <div className="flex items-center gap-2">
+                    {/* Call Farmer Button */}
+                    {onStartCall && isPending && (
+                        <button
+                            onClick={handleStartCall}
+                            disabled={isStartingCall}
+                            className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full bg-[#2E7D32] hover:bg-[#256029] text-white text-xs sm:text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-md hover:shadow-lg"
+                        >
+                            {isStartingCall ? (
+                                <>
+                                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    <span className="hidden sm:inline">Calling...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="material-symbols-outlined text-[20px]">videocam</span>
+                                    <span className="hidden sm:inline">📞 Call Farmer</span>
+                                    <span className="sm:hidden">Call</span>
+                                </>
+                            )}
+                        </button>
+                    )}
+                    <button className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs sm:text-sm font-bold hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
+                        <span className="material-symbols-outlined text-[20px]">help</span>
+                        <span>Help</span>
+                    </button>
+                </div>
             </header>
 
             {/* Main Layout */}
