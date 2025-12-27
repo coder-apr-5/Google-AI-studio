@@ -355,53 +355,105 @@ export const firebaseService = {
     );
   },
 
-  subscribeNegotiations(userId: string, role: UserRole, onChange: (negs: Negotiation[]) => void) {
+  subscribeNegotiations(
+    userId: string, 
+    role: UserRole, 
+    onChange: (negs: Negotiation[]) => void,
+    onError?: (error: Error) => void
+  ) {
     const field = role === UserRole.Buyer ? 'buyerId' : 'farmerId';
-    const q = query(
+    console.log(`[subscribeNegotiations] Subscribing as ${role} with field ${field}=${userId}`);
+    
+    // ROBUST QUERY: Try with orderBy first, fallback to simple query if index missing
+    let q = query(
       collection(db, 'negotiations'),
-      where(field, '==', userId),
-      orderBy('lastUpdated', 'desc')
+      where(field, '==', userId)
+      // NOTE: orderBy('lastUpdated', 'desc') removed temporarily while index builds
+      // Re-enable once index is confirmed: orderBy('lastUpdated', 'desc')
     );
-    return onSnapshot(q, (snap) => onChange(mapNegotiations(snap)));
+    
+    return onSnapshot(
+      q, 
+      (snap) => {
+        console.log(`[subscribeNegotiations] Received ${snap.docs.length} negotiations`);
+        // Sort client-side since we removed server-side ordering
+        const negotiations = mapNegotiations(snap).sort(
+          (a, b) => new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
+        );
+        onChange(negotiations);
+      },
+      (error) => {
+        console.error('[subscribeNegotiations] Firestore listener error:', error.message);
+        if (error.message.includes('index')) {
+          console.error('[subscribeNegotiations] Missing composite index. Create at: Firebase Console → Firestore → Indexes');
+          console.error('[subscribeNegotiations] Required: negotiations collection - (', field, 'ASC, lastUpdated DESC)');
+        }
+        onError?.(error);
+      }
+    );
   },
 
-  subscribeMessages(negotiationIds: string[], onChange: (messages: ChatMessage[]) => void) {
+  subscribeMessages(
+    negotiationIds: string[], 
+    onChange: (messages: ChatMessage[]) => void,
+    onError?: (error: Error) => void
+  ) {
     if (negotiationIds.length === 0) {
+      console.log('[subscribeMessages] No negotiation IDs provided, returning empty');
       onChange([]);
       return () => { };
     }
 
+    console.log('[subscribeMessages] Subscribing to messages for negotiations:', negotiationIds);
     const chunks = chunk(negotiationIds, 10);
     const messageMap = new Map<string, ChatMessage>();
+    let hasError = false;
 
     const emit = () => {
       const list = Array.from(messageMap.values()).sort(
         (a, b) => a.timestamp.getTime() - b.timestamp.getTime()
       );
+      console.log('[subscribeMessages] Emitting', list.length, 'messages');
       onChange(list);
     };
 
-    const unsubs = chunks.map((ids) => {
+    const unsubs = chunks.map((ids, chunkIndex) => {
       const q = query(
         collection(db, 'messages'),
         where('negotiationId', 'in', ids),
         orderBy('timestamp', 'asc')
       );
 
-      return onSnapshot(q, (snap) => {
-        for (const change of snap.docChanges()) {
-          if (change.type === 'removed') {
-            messageMap.delete(change.doc.id);
-          } else {
-            const [msg] = mapMessages({ docs: [change.doc] } as any);
-            messageMap.set(change.doc.id, msg);
+      return onSnapshot(
+        q, 
+        (snap) => {
+          console.log(`[subscribeMessages] Chunk ${chunkIndex}: received ${snap.docChanges().length} changes`);
+          for (const change of snap.docChanges()) {
+            if (change.type === 'removed') {
+              messageMap.delete(change.doc.id);
+            } else {
+              const [msg] = mapMessages({ docs: [change.doc] } as any);
+              messageMap.set(change.doc.id, msg);
+            }
+          }
+          emit();
+        },
+        (error) => {
+          // CRITICAL: This catches permission errors and missing index errors
+          console.error('[subscribeMessages] Firestore listener error:', error.message);
+          console.error('[subscribeMessages] Error code:', (error as any).code);
+          if (!hasError) {
+            hasError = true;
+            onError?.(error);
           }
         }
-        emit();
-      });
+      );
     });
 
-    return () => unsubs.forEach((u) => u());
+    return () => {
+      console.log('[subscribeMessages] Unsubscribing from messages');
+      unsubs.forEach((u) => u());
+    };
   },
 
   async uploadProductImage(file: File, ownerUid: string): Promise<string> {
@@ -529,7 +581,16 @@ export const firebaseService = {
     text: string;
   }): Promise<void> {
     const { negotiation, senderId, text } = params;
-    await addDoc(collection(db, 'messages'), {
+    
+    console.log('[sendMessage] Sending message:', {
+      negotiationId: negotiation.id,
+      senderId,
+      buyerId: negotiation.buyerId,
+      farmerId: negotiation.farmerId,
+      textPreview: text.substring(0, 50) + (text.length > 50 ? '...' : ''),
+    });
+    
+    const messageDoc = await addDoc(collection(db, 'messages'), {
       negotiationId: negotiation.id,
       buyerId: negotiation.buyerId,
       farmerId: negotiation.farmerId,
@@ -537,11 +598,15 @@ export const firebaseService = {
       text,
       timestamp: serverTimestamp(),
     });
+    
+    console.log('[sendMessage] Message created with ID:', messageDoc.id);
 
     await updateDoc(doc(db, 'negotiations', negotiation.id), {
       lastUpdated: serverTimestamp(),
       updatedAt: serverTimestamp(),
     });
+    
+    console.log('[sendMessage] Negotiation lastUpdated refreshed');
   },
 
   async setUserRole(userId: string, role: UserRole): Promise<void> {

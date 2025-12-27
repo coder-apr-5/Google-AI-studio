@@ -14,7 +14,6 @@ interface BuyerViewProps {
     negotiations: Negotiation[];
     messages: ChatMessage[];
     currentUserId: string;
-    onAddToCart: (product: Product) => void;
     onStartNegotiation: (product: Product) => void;
     onRespondToCounter: (negotiationId: string, response: 'Accepted' | 'Rejected') => void;
     onOpenChat: (negotiation: Negotiation) => void;
@@ -32,7 +31,6 @@ export const BuyerView = ({
     negotiations,
     messages,
     currentUserId,
-    onAddToCart, 
     onStartNegotiation, 
     onRespondToCounter, 
     onOpenChat,
@@ -122,10 +120,6 @@ export const BuyerView = ({
                 product={selectedProduct}
                 farmer={selectedFarmer}
                 onBack={() => setSelectedProduct(null)}
-                onAddToCart={(product, qty) => {
-                    onAddToCart(product);
-                    setSelectedProduct(null);
-                }}
                 onStartNegotiation={(product) => {
                     onStartNegotiation(product);
                     setSelectedProduct(null);
@@ -352,7 +346,7 @@ export const BuyerView = ({
                         <div>
                             <h2 className="text-xl font-bold text-gray-900">
                                 {filterCategory === 'All' ? 'All Products' : filterCategory}
-                                {filterType !== 'All' && ` - ${filterType}`}
+                                {' - Bulk Lots'}
                             </h2>
                             <p className="text-sm text-gray-500">Found {displayedProducts.length} listings</p>
                         </div>

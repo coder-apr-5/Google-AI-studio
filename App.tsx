@@ -3,7 +3,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { UserRole, Product, CartItem, Negotiation, NegotiationStatus, ProductType, ChatMessage, BotChatMessage, Farmer, User } from './types';
 import type { Role } from './components/landing';
-import { getChatResponse, verifyFarmerProfile } from './services/geminiService';
+import { getChatResponse, verifyFarmerProfile, isUsingFallbackKey } from './services/geminiService';
 import { LandingPage } from './components/LandingPage';
 import { BuyerView } from './components/BuyerView';
 import { FarmerView } from './components/FarmerView';
@@ -21,6 +21,7 @@ import { AuthModal } from './components/AuthModal';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from './firebase';
 import { firebaseService } from './services/firebaseService';
+import { FirestoreErrorBoundary } from './components/ErrorBoundary';
 
 export default function App() {
     const [currentUser, setCurrentUser] = useState<User | null>(null);
@@ -84,6 +85,13 @@ export default function App() {
         };
     }, []);
 
+    // Show warning if using fallback Gemini API key
+    useEffect(() => {
+        if (isUsingFallbackKey && currentUser) {
+            console.warn('[App] Using fallback Gemini API key. Set VITE_GEMINI_API_KEY in .env for production.');
+        }
+    }, [currentUser]);
+
     useEffect(() => {
         const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
             if (!firebaseUser) {
@@ -119,17 +127,68 @@ export default function App() {
             setNegotiations([]);
             return;
         }
-        const unsubNegs = firebaseService.subscribeNegotiations(currentUser.uid, currentUser.role, setNegotiations);
+        console.log('[App] Setting up negotiations subscription for user:', currentUser.uid, 'role:', currentUser.role);
+        const unsubNegs = firebaseService.subscribeNegotiations(
+            currentUser.uid, 
+            currentUser.role, 
+            (negs) => {
+                console.log('[App] Received', negs.length, 'negotiations');
+                setNegotiations(negs);
+            },
+            (error) => {
+                console.error('[App] Negotiation subscription error:', error);
+                showToast('Error loading negotiations. Check console for details.', 'error');
+            }
+        );
         return () => unsubNegs();
     }, [currentUser?.uid, currentUser?.role]);
 
+    // Use a stable reference to negotiation IDs to prevent unnecessary re-subscriptions
+    const negotiationIdsRef = React.useRef<string[]>([]);
+    
     useEffect(() => {
-        if (!currentUser || negotiations.length === 0) {
+        if (!currentUser) {
             setMessages([]);
             return;
         }
-        const negIds = negotiations.map((n) => n.id);
-        const unsubMsgs = firebaseService.subscribeMessages(negIds, setMessages);
+        
+        const newNegIds = negotiations.map((n) => n.id).sort().join(',');
+        const oldNegIds = negotiationIdsRef.current.sort().join(',');
+        
+        // Only resubscribe if the negotiation IDs actually changed
+        if (newNegIds === oldNegIds && negotiationIdsRef.current.length > 0) {
+            console.log('[App] Negotiation IDs unchanged, skipping message resubscription');
+            return;
+        }
+        
+        negotiationIdsRef.current = negotiations.map((n) => n.id);
+        
+        if (negotiations.length === 0) {
+            console.log('[App] No negotiations, clearing messages');
+            setMessages([]);
+            return;
+        }
+        
+        console.log('[App] Setting up messages subscription for', negotiations.length, 'negotiations');
+        const unsubMsgs = firebaseService.subscribeMessages(
+            negotiationIdsRef.current, 
+            (msgs) => {
+                console.log('[App] Received', msgs.length, 'messages');
+                setMessages(msgs);
+            },
+            (error) => {
+                console.error('[App] Message subscription error:', error);
+                // Check for specific error types
+                const errorMessage = error.message || '';
+                if (errorMessage.includes('index')) {
+                    showToast('Database index required. Check Firebase Console.', 'error');
+                } else if (errorMessage.includes('permission')) {
+                    showToast('Permission denied accessing messages.', 'error');
+                } else {
+                    showToast('Error loading messages.', 'error');
+                }
+            }
+        );
         return () => unsubMsgs();
     }, [currentUser?.uid, negotiations]);
 
@@ -511,7 +570,7 @@ export default function App() {
             if (!farmer) {
                  return <div className="text-center py-10"><p>Farmer not found.</p></div>;
             }
-            return <FarmerProfile {...{farmer, products: products.filter(p => p.farmerId === viewingFarmerId), onBack: handleBackToProducts, onAddToCart: handleAddToCart, onNegotiate: handleOpenNegotiation, wishlist, onToggleWishlist: handleToggleWishlist, onVerifyFarmer: handleVerifyFarmer, onContactFarmer: handleContactFarmer }} />;
+            return <FarmerProfile {...{farmer, products: products.filter(p => p.farmerId === viewingFarmerId), onBack: handleBackToProducts, onNegotiate: handleOpenNegotiation, wishlist, onToggleWishlist: handleToggleWishlist, onVerifyFarmer: handleVerifyFarmer, onContactFarmer: handleContactFarmer }} />;
         }
         if (isCartViewOpen && userRole === UserRole.Buyer) {
             const handlePaymentSuccess = () => {
@@ -548,21 +607,29 @@ export default function App() {
                     </div>
                 );
             }
-             return <FarmerView {...{
-                 onAddNewProduct: (data, file) => handleAddNewProduct(data, file), 
-                 onUpdateProduct: handleUpdateProduct, 
-                 onRespond: handleNegotiationResponse, 
-                 onCounter: handleOpenNegotiation, 
-                 onOpenChat: handleOpenChat, 
-                 onSendMessage: handleSendMessageToNegotiation,
-                 products: products.filter(p => p.farmerId === currentUser.uid), 
-                 negotiations: negotiations.filter(n => n.farmerId === currentUser.uid),
-                 messages: messages,
-                 currentUserId: currentUser.uid,
-                 currentUser: currentUser
-             }} />;
+             return (
+                 <FirestoreErrorBoundary fallbackMessage="Setting up your farmer dashboard. This usually takes 2-3 minutes during initial setup.">
+                     <FarmerView {...{
+                         onAddNewProduct: (data, file) => handleAddNewProduct(data, file), 
+                         onUpdateProduct: handleUpdateProduct, 
+                         onRespond: handleNegotiationResponse, 
+                         onCounter: handleOpenNegotiation, 
+                         onOpenChat: handleOpenChat, 
+                         onSendMessage: handleSendMessageToNegotiation,
+                         products: products.filter(p => p.farmerId === currentUser.uid), 
+                         negotiations: negotiations.filter(n => n.farmerId === currentUser.uid),
+                         messages: messages,
+                         currentUserId: currentUser.uid,
+                         currentUser: currentUser
+                     }} />
+                 </FirestoreErrorBoundary>
+             );
         }
-        return <BuyerView {...{products, cart, cartTotal, minCartValue: MIN_CART_VALUE, negotiations: negotiations.filter(n => n.buyerId === currentUser.uid), messages, currentUserId: currentUser.uid, onAddToCart: handleAddToCart, onStartNegotiation: handleOpenNegotiation, onRespondToCounter: handleNegotiationResponse, onOpenChat: handleOpenChat, onSendMessage: handleSendMessageToNegotiation, wishlist, onToggleWishlist: handleToggleWishlist, farmers, onViewFarmerProfile: handleViewFarmerProfile, onSwitchRole: handleSwitchRole, isLoadingProducts}} />;
+        return (
+            <FirestoreErrorBoundary fallbackMessage="Syncing with marketplace. This usually takes 2-3 minutes during initial setup.">
+                <BuyerView {...{products, negotiations: negotiations.filter(n => n.buyerId === currentUser.uid), messages, currentUserId: currentUser.uid, onStartNegotiation: handleOpenNegotiation, onRespondToCounter: handleNegotiationResponse, onOpenChat: handleOpenChat, onSendMessage: handleSendMessageToNegotiation, wishlist, onToggleWishlist: handleToggleWishlist, farmers, onViewFarmerProfile: handleViewFarmerProfile, onSwitchRole: handleSwitchRole, isLoadingProducts}} />
+            </FirestoreErrorBoundary>
+        );
     }
 
     // Show landing page if not authenticated

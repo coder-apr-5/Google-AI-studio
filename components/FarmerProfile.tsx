@@ -8,7 +8,6 @@ interface FarmerProfileProps {
     farmer: Farmer;
     products: Product[];
     onBack: () => void;
-    onAddToCart: (product: Product) => void;
     onNegotiate: (product: Product) => void;
     wishlist: string[];
     onToggleWishlist: (productId: string) => void;
@@ -28,7 +27,7 @@ const StatItem = ({ icon, label, value }: { icon: React.ReactNode, label: string
     </div>
 );
 
-export const FarmerProfile = ({ farmer, products, onBack, onAddToCart, onNegotiate, wishlist, onToggleWishlist, onVerifyFarmer, onContactFarmer }: FarmerProfileProps) => {
+export const FarmerProfile = ({ farmer, products, onBack, onNegotiate, wishlist, onToggleWishlist, onVerifyFarmer, onContactFarmer }: FarmerProfileProps) => {
     const [isVerifying, setIsVerifying] = useState(false);
 
     const handleVerifyClick = async () => {
@@ -118,7 +117,6 @@ export const FarmerProfile = ({ farmer, products, onBack, onAddToCart, onNegotia
                             <ProductCard 
                                 key={p.id}
                                 product={p} 
-                                onAddToCart={onAddToCart} 
                                 onNegotiate={onNegotiate}
                                 isInWishlist={wishlist.includes(p.id)}
                                 onToggleWishlist={onToggleWishlist} 

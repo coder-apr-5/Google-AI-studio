@@ -1,11 +1,10 @@
 
 import React from 'react';
-import { Product, ProductType, Farmer } from '../types';
+import { Product, Farmer } from '../types';
 import { HeartIcon, CheckCircleIcon, StarIcon, MapPinIcon } from './icons';
 
 interface ProductCardProps {
     product: Product;
-    onAddToCart: (product: Product) => void;
     onNegotiate: (product: Product) => void;
     isInWishlist: boolean;
     onToggleWishlist: (productId: string) => void;
@@ -13,8 +12,8 @@ interface ProductCardProps {
     onViewFarmerProfile: (farmerId: string) => void;
 }
 
-// FIX: Changed to React.FC to correctly type component that can receive a 'key' prop.
-export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, onNegotiate, isInWishlist, onToggleWishlist, farmer, onViewFarmerProfile }) => (
+// B2B Platform - ProductCard always shows Negotiate button (no Add to Cart)
+export const ProductCard: React.FC<ProductCardProps> = ({ product, onNegotiate, isInWishlist, onToggleWishlist, farmer, onViewFarmerProfile }) => (
     <div className="bg-background-alt rounded-xl shadow-md overflow-hidden group transform hover:-translate-y-1 transition-all duration-300 flex flex-col h-full border border-stone-200/80 hover:shadow-xl">
         <div className="relative">
              <button 
@@ -71,21 +70,13 @@ export const ProductCard: React.FC<ProductCardProps> = ({ product, onAddToCart, 
 
             <div className="flex justify-between items-center mt-auto pt-4 border-t border-stone-200/80">
                 <span className="text-2xl font-bold text-primary font-heading">₹{product.price}</span>
-                {product.type === ProductType.Retail ? (
-                    <button 
-                        onClick={() => onAddToCart(product)} 
-                        className="bg-accent text-stone-900 px-5 py-2 rounded-full font-bold text-sm hover:bg-yellow-400 transform hover:scale-105 transition-all duration-300 shadow-sm"
-                    >
-                        Add to Cart
-                    </button>
-                ) : (
-                    <button 
-                        onClick={() => onNegotiate(product)} 
-                        className="bg-secondary text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-secondary-dark transform hover:scale-105 transition-all duration-300 shadow-sm"
-                    >
-                        Negotiate
-                    </button>
-                )}
+                {/* B2B Platform - All products use negotiation */}
+                <button 
+                    onClick={() => onNegotiate(product)} 
+                    className="bg-secondary text-white px-5 py-2 rounded-full font-bold text-sm hover:bg-secondary-dark transform hover:scale-105 transition-all duration-300 shadow-sm"
+                >
+                    Negotiate
+                </button>
             </div>
         </div>
     </div>

@@ -28,6 +28,7 @@ interface AIAnalysisResult {
     defects: string;
     name: string;
     category: ProductCategory;
+    isValidAgri: boolean; // NEW: AI gatekeeper flag
 }
 
 const fileToBase64 = (file: File): Promise<string> =>
@@ -75,23 +76,34 @@ export const ProductUploadPage: React.FC<ProductUploadPageProps> = ({ onBack, on
             const base64Image = await fileToBase64(file);
             const details = await generateProductDetails(base64Image, file.type);
             
+            // Check AI gatekeeper: is this a valid agricultural product?
+            const isValidAgri = details.is_valid_agri !== false; // Default to true if undefined
+            
             // Simulate AI analysis with the returned details
             const mockAnalysis: AIAnalysisResult = {
-                grade: 'A',
-                gradeLabel: 'Premium',
-                description: details.description || 'High quality produce with optimal characteristics',
-                estimatedPrice: Math.floor(Math.random() * 30) + 15,
+                grade: isValidAgri ? 'A' : 'X',
+                gradeLabel: isValidAgri ? 'Premium' : 'Invalid',
+                description: isValidAgri 
+                    ? (details.description || 'High quality produce with optimal characteristics')
+                    : 'This does not appear to be an agricultural product.',
+                estimatedPrice: isValidAgri ? Math.floor(Math.random() * 30) + 15 : 0,
                 mspStatus: { isAbove: true, percentage: Math.floor(Math.random() * 20) + 5 },
-                confidence: Math.floor(Math.random() * 10) + 90,
-                moisture: 'Optimal (12%)',
-                defects: 'None Detected',
-                name: details.name || 'Fresh Produce',
-                category: details.category || ProductCategory.Vegetable,
+                confidence: isValidAgri ? Math.floor(Math.random() * 10) + 90 : 0,
+                moisture: isValidAgri ? 'Optimal (12%)' : 'N/A',
+                defects: isValidAgri ? 'None Detected' : 'N/A',
+                name: details.name || 'Product',
+                category: details.category || ProductCategory.Other,
+                isValidAgri: isValidAgri,
             };
             
             setAnalysisResult(mockAnalysis);
             setEditablePrice(mockAnalysis.estimatedPrice);
-            showToast('AI analysis complete!', 'success');
+            
+            if (isValidAgri) {
+                showToast('AI analysis complete!', 'success');
+            } else {
+                showToast('This does not appear to be an agricultural product.', 'error');
+            }
         } catch (error) {
             showToast(error instanceof Error ? error.message : 'Analysis failed', 'error');
             // Set default values even on error
@@ -106,6 +118,7 @@ export const ProductUploadPage: React.FC<ProductUploadPageProps> = ({ onBack, on
                 defects: 'Unable to detect',
                 name: 'Product',
                 category: ProductCategory.Other,
+                isValidAgri: true, // Allow listing on error (benefit of doubt)
             });
             setEditablePrice(20);
         } finally {
@@ -454,6 +467,20 @@ export const ProductUploadPage: React.FC<ProductUploadPageProps> = ({ onBack, on
 
                                 {/* Action Area */}
                                 <div className="mt-4 flex flex-col gap-3 sticky bottom-4 z-20">
+                                    {/* AI Gatekeeper: Block non-agricultural products */}
+                                    {!analysisResult.isValidAgri && (
+                                        <div className="bg-red-50 border-2 border-red-300 rounded-xl p-4 flex items-start gap-3">
+                                            <span className="material-symbols-outlined text-red-600 text-2xl shrink-0">block</span>
+                                            <div>
+                                                <p className="text-red-800 font-bold text-lg">Not an Agricultural Product</p>
+                                                <p className="text-red-600 text-sm mt-1">
+                                                    Anna Bazaar only accepts agricultural products (fruits, vegetables, grains, and farm produce). 
+                                                    Please upload a valid harvest photo.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    
                                     {/* Progress bar while uploading */}
                                     {isSubmitting && (
                                         <div className="bg-white rounded-xl p-4 shadow-md border border-gray-200">
@@ -478,13 +505,18 @@ export const ProductUploadPage: React.FC<ProductUploadPageProps> = ({ onBack, on
                                     
                                     <button 
                                         onClick={handleConfirmListing}
-                                        disabled={isSubmitting}
+                                        disabled={isSubmitting || !analysisResult.isValidAgri}
                                         className="w-full py-5 bg-[#2E7D32] hover:bg-green-700 disabled:bg-gray-400 text-white rounded-xl shadow-lg hover:shadow-xl transition-all active:scale-[0.99] flex items-center justify-center gap-2 group"
                                     >
                                         {isSubmitting ? (
                                             <>
                                                 <LoaderIcon className="h-6 w-6 animate-spin" />
                                                 <span className="text-xl font-bold">Uploading...</span>
+                                            </>
+                                        ) : !analysisResult.isValidAgri ? (
+                                            <>
+                                                <span className="material-symbols-outlined">block</span>
+                                                <span className="text-xl font-bold">Cannot List - Not Agricultural</span>
                                             </>
                                         ) : (
                                             <>

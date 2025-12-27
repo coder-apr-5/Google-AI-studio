@@ -5,7 +5,6 @@ interface ProductDetailPageProps {
     product: Product;
     farmer: Farmer | undefined;
     onBack: () => void;
-    onAddToCart: (product: Product, quantity?: number) => void;
     onStartNegotiation: (product: Product) => void;
     onViewFarmerProfile: (farmerId: string) => void;
     isWishlisted: boolean;
@@ -37,13 +36,13 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
     product,
     farmer,
     onBack,
-    onAddToCart,
     onStartNegotiation,
     onViewFarmerProfile,
     isWishlisted,
     onToggleWishlist,
 }) => {
-    const [selectedQuantity, setSelectedQuantity] = useState(product.type === ProductType.Bulk ? product.quantity : 1);
+    // B2B Bulk - start at minimum quantity (100kg)
+    const [selectedQuantity, setSelectedQuantity] = useState(product.quantity >= 100 ? product.quantity : 100);
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
     const aiInspection = useMemo(() => generateAIInspectionData(product), [product]);
@@ -193,14 +192,10 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                                     alt={product.name}
                                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                                 />
-                                {/* Product Type Badge */}
+                                {/* Product Type Badge - B2B Bulk Only */}
                                 <div className="absolute top-4 left-4 flex gap-2">
-                                    <span className={`px-3 py-1.5 rounded-full text-xs font-bold shadow-sm ${
-                                        product.type === ProductType.Bulk 
-                                            ? 'bg-blue-600 text-white' 
-                                            : 'bg-[#2f7f33] text-white'
-                                    }`}>
-                                        {product.type === ProductType.Bulk ? 'Bulk / Negotiable' : 'Retail / Fixed Price'}
+                                    <span className="px-3 py-1.5 rounded-full text-xs font-bold shadow-sm bg-blue-600 text-white">
+                                        Bulk Lot / Negotiable
                                     </span>
                                 </div>
                                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1.5 rounded-full text-xs font-bold shadow-sm flex items-center gap-1">
@@ -462,57 +457,35 @@ export const ProductDetailPage: React.FC<ProductDetailPageProps> = ({
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-gray-500">
-                                            {product.type === ProductType.Bulk ? `Min: ${minQuantity}kg` : `Available: ${maxQuantity}`}
+                                            Min: {minQuantity}kg
                                         </span>
                                         <span className="font-bold text-gray-900">Total: ₹{totalPrice.toLocaleString()}</span>
                                     </div>
                                 </div>
 
-                                {/* Action Buttons */}
+                                {/* Action Buttons - B2B Bulk Only */}
                                 <div className="flex flex-col gap-4 mt-2">
-                                    {product.type === ProductType.Retail ? (
-                                        <>
-                                            {/* Retail: Buy Now & Add to Cart */}
-                                            <button 
-                                                onClick={() => onAddToCart(product, selectedQuantity)}
-                                                className="w-full bg-[#2f7f33] hover:bg-[#256629] text-white h-14 rounded-xl font-black text-lg shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all"
-                                            >
-                                                <span>Buy Now</span>
-                                                <span className="material-symbols-outlined font-bold">shopping_cart_checkout</span>
-                                            </button>
-                                            <button 
-                                                onClick={() => onAddToCart(product, selectedQuantity)}
-                                                className="w-full bg-white border-2 border-[#2f7f33] text-[#2f7f33] h-14 rounded-xl font-bold text-lg flex items-center justify-center gap-2 hover:bg-green-50 transform active:scale-[0.98] transition-all"
-                                            >
-                                                <span className="material-symbols-outlined">add_shopping_cart</span>
-                                                <span>Add to Cart</span>
-                                            </button>
-                                        </>
-                                    ) : (
-                                        <>
-                                            {/* Bulk: Make Offer / Chat & Add to Watchlist */}
-                                            <button 
-                                                onClick={() => onStartNegotiation(product)}
-                                                className="w-full bg-[#2f7f33] hover:bg-[#256629] text-white h-14 rounded-xl font-black text-lg shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all"
-                                            >
-                                                <span className="material-symbols-outlined">chat</span>
-                                                <span>Make Offer / Chat</span>
-                                            </button>
-                                            <button 
-                                                onClick={() => onToggleWishlist(product.id)}
-                                                className={`w-full h-14 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all ${
-                                                    isWishlisted 
-                                                        ? 'bg-red-50 border-2 border-red-500 text-red-500' 
-                                                        : 'bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50'
-                                                }`}
-                                            >
-                                                <span className="material-symbols-outlined" style={{ fontVariationSettings: isWishlisted ? "'FILL' 1" : "'FILL' 0" }}>
-                                                    {isWishlisted ? 'heart_check' : 'favorite'}
-                                                </span>
-                                                <span>{isWishlisted ? 'Saved to Watchlist' : 'Add to Watchlist'}</span>
-                                            </button>
-                                        </>
-                                    )}
+                                    {/* Make Offer / Chat & Add to Watchlist */}
+                                    <button 
+                                        onClick={() => onStartNegotiation(product)}
+                                        className="w-full bg-[#2f7f33] hover:bg-[#256629] text-white h-14 rounded-xl font-black text-lg shadow-lg shadow-green-500/20 flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all"
+                                    >
+                                        <span className="material-symbols-outlined">chat</span>
+                                        <span>Make Offer / Chat</span>
+                                    </button>
+                                    <button 
+                                        onClick={() => onToggleWishlist(product.id)}
+                                        className={`w-full h-14 rounded-xl font-bold text-lg flex items-center justify-center gap-2 transform active:scale-[0.98] transition-all ${
+                                            isWishlisted 
+                                                ? 'bg-red-50 border-2 border-red-500 text-red-500' 
+                                                : 'bg-white border-2 border-blue-600 text-blue-600 hover:bg-blue-50'
+                                        }`}
+                                    >
+                                        <span className="material-symbols-outlined" style={{ fontVariationSettings: isWishlisted ? "'FILL' 1" : "'FILL' 0" }}>
+                                            {isWishlisted ? 'heart_check' : 'favorite'}
+                                        </span>
+                                        <span>{isWishlisted ? 'Saved to Watchlist' : 'Add to Watchlist'}</span>
+                                    </button>
                                 </div>
 
                                 {/* Safety Note */}
