@@ -16,6 +16,7 @@
     "dodopayments-checkout": "^1.4.0",
     "firebase": "^12.6.0",
     "framer-motion": "^12.23.26",
+    "qrcode.react": "^4.2.0",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
     "tailwind-merge": "^3.4.0"

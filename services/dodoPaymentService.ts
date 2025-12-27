@@ -4,24 +4,18 @@
  * ═══════════════════════════════════════════════════════════════════════════════
  * 
  * Real payment integration using DodoPayments API
- * Handles checkout session creation and payment processing
+ * With proper session creation and payment verification
  * 
  * @author Anna Bazaar Team - Calcutta Hacks 2025
  */
-
-import DodoPayments from 'dodopayments';
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // CONFIGURATION
 // ═══════════════════════════════════════════════════════════════════════════════
 
 const DODO_API_KEY = import.meta.env.VITE_DODO_API_KEY || '';
+const DODO_API_BASE = 'https://api.dodopayments.com';
 const IS_TEST_MODE = import.meta.env.VITE_DODO_MODE !== 'live';
-
-// Initialize DodoPayments client
-const dodoClient = new DodoPayments({
-    bearerToken: DODO_API_KEY,
-});
 
 // ═══════════════════════════════════════════════════════════════════════════════
 // TYPES
@@ -43,6 +37,7 @@ export interface CreateCheckoutParams {
     buyerName?: string;
     orderId?: string;
     returnUrl?: string;
+    paymentMethodType?: string;
     metadata?: Record<string, string>;
 }
 
@@ -54,11 +49,20 @@ export interface CheckoutSessionResult {
 }
 
 export interface PaymentStatus {
-    status: 'pending' | 'completed' | 'failed' | 'cancelled';
+    status: 'pending' | 'processing' | 'completed' | 'failed' | 'cancelled' | 'expired';
     transactionId?: string;
     amount?: number;
     currency?: string;
     completedAt?: Date;
+    paymentMethod?: string;
+    error?: string;
+}
+
+export interface VerifyPaymentResult {
+    verified: boolean;
+    status: PaymentStatus['status'];
+    transactionId?: string;
+    error?: string;
 }
 
 // ═══════════════════════════════════════════════════════════════════════════════
@@ -66,8 +70,6 @@ export interface PaymentStatus {
 // ═══════════════════════════════════════════════════════════════════════════════
 
 class DodoPaymentService {
-    private isInitialized = false;
-
     /**
      * Check if the service is properly configured
      */
@@ -84,7 +86,7 @@ class DodoPaymentService {
 
     /**
      * Create a checkout session for one-time payment
-     * This calls the DodoPayments API to create a checkout session
+     * Returns a checkout URL that user should be redirected to
      */
     async createCheckoutSession(params: CreateCheckoutParams): Promise<CheckoutSessionResult> {
         if (!this.isConfigured()) {
@@ -96,40 +98,51 @@ class DodoPaymentService {
         }
 
         try {
-            // For DodoPayments, we need to create products first or use dynamic pricing
-            // Since this is a marketplace, we'll use custom checkout with metadata
-            const response = await dodoClient.checkoutSessions.create({
-                // For one-time payments without pre-registered products,
-                // we'll use the metadata to store item details
-                product_cart: params.items.map(item => ({
-                    product_id: item.productId,
-                    quantity: item.quantity,
-                })),
-                customer: params.buyerEmail ? {
-                    email: params.buyerEmail,
-                    name: params.buyerName,
-                } : undefined,
-                return_url: params.returnUrl || `${window.location.origin}/payment/success`,
-                metadata: {
-                    order_id: params.orderId || `AB-${Date.now()}`,
-                    buyer_id: params.buyerId || 'anonymous',
-                    total_amount: String(params.totalAmount),
-                    items_json: JSON.stringify(params.items.map(i => ({
-                        name: i.name,
-                        price: i.price,
-                        qty: i.quantity,
-                        farmerId: i.farmerId,
-                    }))),
-                    ...params.metadata,
+            const orderId = params.orderId || `AB-${Date.now()}`;
+            const returnUrl = params.returnUrl || `${window.location.origin}?payment=complete&order=${orderId}`;
+
+            const response = await fetch(`${DODO_API_BASE}/checkout_sessions`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${DODO_API_KEY}`,
                 },
-                allowed_payment_method_types: ['credit', 'debit', 'upi_collect', 'upi_intent', 'google_pay'],
-                billing_currency: 'INR',
+                body: JSON.stringify({
+                    customer: params.buyerEmail ? {
+                        email: params.buyerEmail,
+                        name: params.buyerName,
+                    } : undefined,
+                    return_url: returnUrl,
+                    metadata: {
+                        order_id: orderId,
+                        buyer_id: params.buyerId || 'anonymous',
+                        total_amount: String(params.totalAmount),
+                        items_json: JSON.stringify(params.items.map(i => ({
+                            name: i.name,
+                            price: i.price,
+                            qty: i.quantity,
+                            farmerId: i.farmerId,
+                        }))),
+                        ...params.metadata,
+                    },
+                    allowed_payment_method_types: params.paymentMethodType
+                        ? [params.paymentMethodType]
+                        : ['credit', 'debit', 'upi_collect', 'upi_intent', 'google_pay', 'netbanking'],
+                    billing_currency: 'INR',
+                }),
             });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(errorData.message || `API error: ${response.status}`);
+            }
+
+            const data = await response.json();
 
             return {
                 success: true,
-                sessionId: response.session_id,
-                checkoutUrl: response.checkout_url || undefined,
+                sessionId: data.session_id || data.id,
+                checkoutUrl: data.checkout_url || data.url,
             };
         } catch (error: any) {
             console.error('[DodoPaymentService] Failed to create checkout session:', error);
@@ -141,80 +154,185 @@ class DodoPaymentService {
     }
 
     /**
-     * Create a simple checkout URL for direct payment
-     * This is useful when you want to redirect to DodoPayments hosted checkout
+     * Verify payment status by session ID
+     * CRITICAL: This is how we confirm payment actually happened
      */
-    async createPaymentLink(params: {
-        amount: number;
-        productName: string;
-        productDescription?: string;
-        buyerEmail?: string;
-        orderId?: string;
-        returnUrl?: string;
-    }): Promise<CheckoutSessionResult> {
+    async verifyPayment(sessionId: string): Promise<VerifyPaymentResult> {
         if (!this.isConfigured()) {
-            // In test mode without API key, return a mock checkout URL
-            console.warn('[DodoPaymentService] API key not configured, using mock mode');
-            return {
-                success: true,
-                sessionId: `mock_session_${Date.now()}`,
-                checkoutUrl: `https://checkout.dodopayments.com/demo?amount=${params.amount}&name=${encodeURIComponent(params.productName)}`,
-            };
+            return { verified: false, status: 'failed', error: 'Service not configured' };
         }
 
         try {
-            const response = await dodoClient.checkoutSessions.create({
-                product_cart: [{
-                    product_id: 'dynamic_product',
-                    quantity: 1,
-                }],
-                customer: params.buyerEmail ? {
-                    email: params.buyerEmail,
-                } : undefined,
-                return_url: params.returnUrl || `${window.location.origin}/payment/success`,
-                metadata: {
-                    order_id: params.orderId || `AB-${Date.now()}`,
-                    product_name: params.productName,
-                    amount: String(params.amount),
+            const response = await fetch(`${DODO_API_BASE}/checkout_sessions/${sessionId}`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${DODO_API_KEY}`,
                 },
-                billing_currency: 'INR',
             });
 
+            if (!response.ok) {
+                throw new Error(`Failed to verify: ${response.status}`);
+            }
+
+            const data = await response.json();
+
+            // Map Dodo's status to our internal status
+            const statusMap: Record<string, PaymentStatus['status']> = {
+                'complete': 'completed',
+                'paid': 'completed',
+                'succeeded': 'completed',
+                'pending': 'pending',
+                'processing': 'processing',
+                'failed': 'failed',
+                'cancelled': 'cancelled',
+                'expired': 'expired',
+            };
+
+            const normalizedStatus = statusMap[data.status?.toLowerCase()] || 'pending';
+            const isVerified = normalizedStatus === 'completed';
+
             return {
-                success: true,
-                sessionId: response.session_id,
-                checkoutUrl: response.checkout_url || undefined,
+                verified: isVerified,
+                status: normalizedStatus,
+                transactionId: data.payment_id || data.transaction_id || sessionId,
             };
         } catch (error: any) {
-            console.error('[DodoPaymentService] Failed to create payment link:', error);
+            console.error('[DodoPaymentService] Payment verification failed:', error);
             return {
-                success: false,
-                error: error.message || 'Failed to create payment link',
+                verified: false,
+                status: 'failed',
+                error: error.message || 'Verification failed',
             };
         }
     }
 
     /**
-     * Get the status of a checkout session
+     * Poll for payment completion with timeout
+     * Use this when waiting for user to complete payment
      */
-    async getSessionStatus(sessionId: string): Promise<PaymentStatus> {
+    async waitForPaymentCompletion(
+        sessionId: string,
+        options: {
+            maxAttempts?: number;
+            intervalMs?: number;
+            onStatusChange?: (status: PaymentStatus['status']) => void;
+        } = {}
+    ): Promise<VerifyPaymentResult> {
+        const { maxAttempts = 60, intervalMs = 5000, onStatusChange } = options;
+        let attempts = 0;
+        let lastStatus: PaymentStatus['status'] = 'pending';
+
+        return new Promise((resolve) => {
+            const poll = async () => {
+                attempts++;
+
+                const result = await this.verifyPayment(sessionId);
+
+                if (result.status !== lastStatus && onStatusChange) {
+                    lastStatus = result.status;
+                    onStatusChange(result.status);
+                }
+
+                // Payment completed successfully
+                if (result.verified) {
+                    resolve(result);
+                    return;
+                }
+
+                // Payment failed or expired
+                if (result.status === 'failed' || result.status === 'cancelled' || result.status === 'expired') {
+                    resolve(result);
+                    return;
+                }
+
+                // Max attempts reached
+                if (attempts >= maxAttempts) {
+                    resolve({
+                        verified: false,
+                        status: 'pending',
+                        error: 'Payment verification timed out. Please check your bank statement.',
+                    });
+                    return;
+                }
+
+                // Continue polling
+                setTimeout(poll, intervalMs);
+            };
+
+            poll();
+        });
+    }
+
+    /**
+     * Get payment details by session ID
+     */
+    async getPaymentDetails(sessionId: string): Promise<PaymentStatus> {
         if (!this.isConfigured()) {
-            return { status: 'pending' };
+            return { status: 'failed', error: 'Service not configured' };
         }
 
         try {
-            const session = await dodoClient.checkoutSessions.retrieve(sessionId);
+            const response = await fetch(`${DODO_API_BASE}/checkout_sessions/${sessionId}`, {
+                headers: {
+                    'Authorization': `Bearer ${DODO_API_KEY}`,
+                },
+            });
 
-            // Map DodoPayments status to our internal status
-            // Adjust based on actual DodoPayments response structure
+            if (!response.ok) {
+                throw new Error(`Failed to get details: ${response.status}`);
+            }
+
+            const data = await response.json();
+
             return {
-                status: 'pending', // Will be updated based on actual response
-                transactionId: sessionId,
+                status: data.status === 'complete' || data.status === 'paid' ? 'completed' : 'pending',
+                transactionId: data.payment_id || sessionId,
+                amount: data.amount,
+                currency: data.currency || 'INR',
+                paymentMethod: data.payment_method_type,
+                completedAt: data.completed_at ? new Date(data.completed_at) : undefined,
             };
-        } catch (error) {
-            console.error('[DodoPaymentService] Failed to get session status:', error);
-            return { status: 'failed' };
+        } catch (error: any) {
+            console.error('[DodoPaymentService] Failed to get payment details:', error);
+            return { status: 'failed', error: error.message };
         }
+    }
+
+    /**
+     * Generate UPI payment string for QR code
+     */
+    generateUPIString(params: {
+        amount: number;
+        merchantUPI: string;
+        merchantName: string;
+        orderId: string;
+        transactionNote?: string;
+    }): string {
+        const { amount, merchantUPI, merchantName, orderId, transactionNote } = params;
+        const txnId = `TXN${Date.now()}`;
+        const note = transactionNote || `Payment for ${orderId}`;
+
+        return `upi://pay?pa=${encodeURIComponent(merchantUPI)}&pn=${encodeURIComponent(merchantName)}&am=${amount}&cu=INR&tn=${encodeURIComponent(note)}&tr=${txnId}`;
+    }
+
+    /**
+     * Generate deep link for specific UPI app
+     */
+    generateUPIDeepLink(appScheme: string, upiString: string): string {
+        const appSchemes: Record<string, string> = {
+            'gpay': 'gpay://upi/',
+            'phonepe': 'phonepe://pay',
+            'paytm': 'paytmmp://pay',
+            'bhim': 'bhim://pay',
+        };
+
+        const scheme = appSchemes[appScheme.toLowerCase()];
+        if (!scheme) {
+            return upiString; // Return standard UPI string as fallback
+        }
+
+        // Extract parameters from UPI string and rebuild for specific app
+        return upiString.replace('upi://', scheme);
     }
 }
 
