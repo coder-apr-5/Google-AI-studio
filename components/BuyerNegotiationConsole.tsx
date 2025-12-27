@@ -98,26 +98,26 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
 
     return (
         <div className="fixed inset-0 z-50 bg-background-light dark:bg-background-dark font-display text-text-main dark:text-white flex flex-col overflow-hidden">
-            {/* Top Navigation Header */}
-            <header className="flex items-center justify-between px-6 py-4 bg-white dark:bg-[#1a262d] border-b border-stone-200 dark:border-[#27333a] shadow-sm z-20">
-                <div className="flex items-center gap-4">
+            {/* Top Navigation Header - Mobile First */}
+            <header className="flex items-center justify-between px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 bg-white dark:bg-[#1a262d] border-b border-stone-200 dark:border-[#27333a] shadow-sm z-20">
+                <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
                     <button
                         onClick={onClose}
-                        className="p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors"
+                        className="p-1.5 sm:p-2 hover:bg-stone-100 dark:hover:bg-stone-800 rounded-full transition-colors"
                     >
-                        <span className="material-symbols-outlined">close</span>
+                        <span className="material-symbols-outlined text-xl sm:text-2xl">close</span>
                     </button>
-                    <div className="flex items-center gap-3">
-                        <div className="size-10 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center text-white">
-                            <span className="material-symbols-outlined">agriculture</span>
+                    <div className="flex items-center gap-2 sm:gap-3">
+                        <div className="size-8 sm:size-10 rounded-lg bg-gradient-to-r from-green-500 to-emerald-600 flex items-center justify-center text-white">
+                            <span className="material-symbols-outlined text-lg sm:text-xl">agriculture</span>
                         </div>
-                        <div>
-                            <h1 className="text-xl font-black">Anna Bazaar</h1>
-                            <p className="text-xs text-stone-500">Negotiation Console</p>
+                        <div className="hidden sm:block">
+                            <h1 className="text-base sm:text-lg lg:text-xl font-black">Anna Bazaar</h1>
+                            <p className="text-[10px] sm:text-xs text-stone-500">Negotiation Console</p>
                         </div>
                     </div>
                 </div>
-                <button className="flex items-center gap-2 px-4 py-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-sm font-bold hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
+                <button className="hidden sm:flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 rounded-full border border-stone-300 dark:border-stone-700 bg-white dark:bg-stone-900 text-xs sm:text-sm font-bold hover:bg-stone-50 dark:hover:bg-stone-800 transition-colors">
                     <span className="material-symbols-outlined text-[20px]">help</span>
                     <span>Help</span>
                 </button>
@@ -128,24 +128,24 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
                 {/* Left Column: Chat Interface */}
                 <main className="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
                     {/* Chat Header */}
-                    <div className="flex items-center justify-between px-6 py-4 bg-white dark:bg-[#1a262d] border-b border-stone-200 dark:border-[#27333a] shadow-sm sticky top-0 z-10">
-                        <div className="flex items-center gap-4">
+                    <div className="flex items-center justify-between px-3 sm:px-4 lg:px-6 py-2 sm:py-3 lg:py-4 bg-white dark:bg-[#1a262d] border-b border-stone-200 dark:border-[#27333a] shadow-sm sticky top-0 z-10">
+                        <div className="flex items-center gap-2 sm:gap-3 lg:gap-4">
                             <div className="relative">
                                 <div
-                                    className="size-12 rounded-full bg-gradient-to-r from-stone-300 to-stone-400 dark:from-stone-700 dark:to-stone-600 flex items-center justify-center text-2xl border border-stone-300 dark:border-stone-700"
+                                    className="size-10 sm:size-12 rounded-full bg-gradient-to-r from-stone-300 to-stone-400 dark:from-stone-700 dark:to-stone-600 flex items-center justify-center text-lg sm:text-2xl border border-stone-300 dark:border-stone-700"
                                 >
                                     👨‍🌾
                                 </div>
-                                <div className="absolute -bottom-1 -right-1 size-4 bg-green-500 border-2 border-white dark:border-stone-900 rounded-full"></div>
+                                <div className="absolute -bottom-0.5 sm:-bottom-1 -right-0.5 sm:-right-1 size-3 sm:size-4 bg-green-500 border-2 border-white dark:border-stone-900 rounded-full"></div>
                             </div>
                             <div>
-                                <h3 className="text-xl font-bold">{farmer?.name || 'Farmer'}</h3>
-                                <div className="flex items-center gap-2 text-sm text-stone-500 dark:text-stone-400">
-                                    <span className="flex items-center gap-1">
-                                        <span className="material-symbols-outlined text-[16px] text-yellow-500">star</span>
-                                        4.8/5 Trust Score
+                                <h3 className="text-base sm:text-lg lg:text-xl font-bold">{farmer?.name || 'Farmer'}</h3>
+                                <div className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm text-stone-500 dark:text-stone-400">
+                                    <span className="hidden sm:flex items-center gap-1">
+                                        <span className="material-symbols-outlined text-[14px] sm:text-[16px] text-yellow-500">star</span>
+                                        4.8/5
                                     </span>
-                                    <span>•</span>
+                                    <span className="hidden sm:inline">•</span>
                                     <span className="text-green-600 dark:text-green-400 font-medium">Online</span>
                                 </div>
                             </div>
@@ -161,7 +161,7 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
                     </div>
 
                     {/* Chat Messages Area */}
-                    <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-6 py-6 space-y-6 bg-stone-50 dark:bg-stone-900/30">
+                    <div ref={chatContainerRef} className="flex-1 overflow-y-auto px-3 sm:px-4 lg:px-6 py-4 sm:py-6 space-y-4 sm:space-y-6 bg-stone-50 dark:bg-stone-900/30">
                         {/* Date Separator - Dynamic */}
                         {messages.length > 0 && (
                             <div className="flex justify-center">
@@ -177,24 +177,24 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
 
                         {/* Initial Offer Card - Only show if no messages yet */}
                         {messages.length === 0 && (
-                            <div className="flex gap-4 max-w-[80%]">
-                                <div className="size-8 rounded-full bg-gradient-to-r from-stone-400 to-stone-500 flex items-center justify-center text-white text-sm font-bold shrink-0">
+                            <div className="flex gap-2 sm:gap-4 max-w-[90%] sm:max-w-[80%]">
+                                <div className="size-6 sm:size-8 rounded-full bg-gradient-to-r from-stone-400 to-stone-500 flex items-center justify-center text-white text-xs sm:text-sm font-bold shrink-0">
                                     👨‍🌾
                                 </div>
                                 <div className="flex flex-col gap-1">
-                                    <div className="bg-white dark:bg-stone-800 p-0 rounded-2xl rounded-tl-none border border-stone-200 dark:border-stone-700 shadow-sm overflow-hidden w-[280px]">
-                                        <div className="bg-orange-50 dark:bg-orange-900/20 px-4 py-2 border-b border-stone-200 dark:border-stone-700 flex items-center gap-2">
-                                            <span className="material-symbols-outlined text-orange-600 text-sm">local_offer</span>
-                                            <span className="text-xs font-bold uppercase tracking-wider text-orange-600">Initial Offer</span>
+                                    <div className="bg-white dark:bg-stone-800 p-0 rounded-2xl rounded-tl-none border border-stone-200 dark:border-stone-700 shadow-sm overflow-hidden w-[240px] sm:w-[280px]">
+                                        <div className="bg-orange-50 dark:bg-orange-900/20 px-3 sm:px-4 py-1.5 sm:py-2 border-b border-stone-200 dark:border-stone-700 flex items-center gap-2">
+                                            <span className="material-symbols-outlined text-orange-600 text-xs sm:text-sm">local_offer</span>
+                                            <span className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-orange-600">Initial Offer</span>
                                         </div>
-                                        <div className="p-4">
+                                        <div className="p-3 sm:p-4">
                                             <div className="flex justify-between items-baseline mb-2">
-                                                <span className="text-sm text-stone-600 dark:text-stone-400">Price/kg</span>
-                                                <span className="text-2xl font-bold">₹{negotiation.initialPrice}</span>
+                                                <span className="text-xs sm:text-sm text-stone-600 dark:text-stone-400">Price/kg</span>
+                                                <span className="text-xl sm:text-2xl font-bold">₹{negotiation.initialPrice}</span>
                                             </div>
-                                            <div className="flex justify-between items-baseline mb-4">
-                                                <span className="text-sm text-stone-600 dark:text-stone-400">Quantity</span>
-                                                <span className="text-base font-medium">{negotiation.quantity} kg</span>
+                                            <div className="flex justify-between items-baseline mb-3 sm:mb-4">
+                                                <span className="text-xs sm:text-sm text-stone-600 dark:text-stone-400">Quantity</span>
+                                                <span className="text-sm sm:text-base font-medium">{negotiation.quantity} kg</span>
                                             </div>
                                         </div>
                                     </div>
@@ -207,8 +207,8 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
 
                         {/* Current Offer Summary */}
                         <div className="flex justify-center">
-                            <div className="flex items-center gap-3 px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-full border border-emerald-200 dark:border-emerald-800">
-                                <span className="text-xs font-medium text-emerald-700 dark:text-emerald-300">
+                            <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 bg-emerald-50 dark:bg-emerald-900/20 rounded-2xl sm:rounded-full border border-emerald-200 dark:border-emerald-800">
+                                <span className="text-[10px] sm:text-xs font-medium text-emerald-700 dark:text-emerald-300 text-center">
                                     Your offer: ₹{negotiation.offeredPrice}/kg for {negotiation.quantity}kg
                                 </span>
                                 <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
@@ -225,15 +225,15 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
                         {messages.map((msg, idx) => {
                             const isMe = msg.senderId === currentUserId;
                             return (
-                                <div key={msg.id || idx} className={`flex gap-3 max-w-[80%] ${isMe ? 'ml-auto flex-row-reverse' : ''}`}>
-                                    <div className={`size-8 rounded-full flex items-center justify-center text-white text-sm font-bold shrink-0 ${isMe ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-stone-400 to-stone-500'}`}>
+                                <div key={msg.id || idx} className={`flex gap-2 sm:gap-3 max-w-[90%] sm:max-w-[80%] ${isMe ? 'ml-auto flex-row-reverse' : ''}`}>
+                                    <div className={`size-6 sm:size-8 rounded-full flex items-center justify-center text-white text-xs sm:text-sm font-bold shrink-0 ${isMe ? 'bg-gradient-to-r from-green-500 to-emerald-600' : 'bg-gradient-to-r from-stone-400 to-stone-500'}`}>
                                         {isMe ? 'YOU' : '👨‍🌾'}
                                     </div>
                                     <div className={`flex flex-col gap-1 ${isMe ? 'items-end' : ''}`}>
-                                        <div className={`p-4 rounded-2xl shadow-sm ${isMe ? 'bg-emerald-50 dark:bg-emerald-900/30 rounded-tr-none border border-emerald-200 dark:border-emerald-800' : 'bg-white dark:bg-stone-800 rounded-tl-none border border-stone-200 dark:border-stone-700'}`}>
-                                            <p className="text-base">{msg.text}</p>
+                                        <div className={`p-3 sm:p-4 rounded-2xl shadow-sm ${isMe ? 'bg-emerald-50 dark:bg-emerald-900/30 rounded-tr-none border border-emerald-200 dark:border-emerald-800' : 'bg-white dark:bg-stone-800 rounded-tl-none border border-stone-200 dark:border-stone-700'}`}>
+                                            <p className="text-sm sm:text-base">{msg.text}</p>
                                         </div>
-                                        <span className={`text-xs text-stone-500 dark:text-stone-400 ${isMe ? 'mr-2' : 'ml-2'}`}>
+                                        <span className={`text-[10px] sm:text-xs text-stone-500 dark:text-stone-400 ${isMe ? 'mr-2' : 'ml-2'}`}>
                                             {new Date(msg.timestamp).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' })}
                                         </span>
                                     </div>
@@ -275,8 +275,8 @@ export const BuyerNegotiationConsole: React.FC<BuyerNegotiationConsoleProps> = (
 
                     {/* Footer: Counter-Offer Tool */}
                     {isPending && (
-                        <div className="absolute bottom-0 left-0 w-full bg-white dark:bg-[#1a262d] border-t border-stone-200 dark:border-[#27333a] p-4 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
-                            <div className="max-w-4xl mx-auto flex flex-col gap-4">
+                        <div className="absolute bottom-0 left-0 w-full bg-white dark:bg-[#1a262d] border-t border-stone-200 dark:border-[#27333a] p-3 sm:p-4 z-20 shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+                            <div className="max-w-4xl mx-auto flex flex-col gap-3 sm:gap-4">
                                 {/* Price Floor Indicator */}
                                 {priceBand && (
                                     <div className="flex items-center justify-between px-3 py-2 bg-stone-50 dark:bg-stone-900 rounded-lg border border-stone-200 dark:border-stone-700">

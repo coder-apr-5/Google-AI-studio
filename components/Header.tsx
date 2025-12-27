@@ -137,10 +137,10 @@ export const Header = ({ user, onSwitchRole, cartItemCount, onCartClick }: Heade
     return (
         <>
             <header className={`bg-background/80 backdrop-blur-lg shadow-sm sticky top-0 z-20 transition-colors duration-300 border-b border-stone-200/80`}>
-                <div className="container mx-auto px-4 sm:px-6 lg:px-8">
-                    <div className="flex items-center justify-between h-20">
+                <div className="container mx-auto px-3 sm:px-4 md:px-6 lg:px-8">
+                    <div className="flex items-center justify-between h-14 sm:h-16 md:h-20">
                         <div className="flex-shrink-0">
-                            <h1 className={`text-3xl font-bold font-heading ${isFarmer ? 'text-farmer-primary' : 'text-primary'}`}>
+                            <h1 className={`text-xl sm:text-2xl md:text-3xl font-bold font-heading ${isFarmer ? 'text-farmer-primary' : 'text-primary'}`}>
                                 Anna Bazaar
                             </h1>
                         </div>

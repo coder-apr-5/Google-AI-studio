@@ -1,16 +1,14 @@
 import React, { useState, useMemo } from 'react';
-import { Product, CartItem, Negotiation, ProductType, NegotiationStatus, ProductCategory, Farmer, ChatMessage } from '../types';
+import { Product, Negotiation, ProductType, NegotiationStatus, ProductCategory, Farmer, ChatMessage } from '../types';
 import { XIcon } from './icons';
 import { ProductDetailPage } from './ProductDetailPage';
 import { BuyerNegotiationConsole } from './BuyerNegotiationConsole';
 import { ProductCardSkeleton } from './ProductCardSkeleton';
 import { firebaseService } from '../services/firebaseService';
 
+// B2B Platform - Cart functionality removed, all purchases via negotiation
 interface BuyerViewProps {
     products: Product[];
-    cart: CartItem[];
-    cartTotal: number;
-    minCartValue: number;
     negotiations: Negotiation[];
     messages: ChatMessage[];
     currentUserId: string;
@@ -70,9 +68,8 @@ export const BuyerView = ({
             filtered = filtered.filter(p => p.category === filterCategory);
         }
 
-        // B2B bulk only - filter to bulk products (or show all for legacy compatibility)
-        // Legacy retail products will still show but only negotiation option available
-        filtered = filtered.filter(p => p.type === ProductType.Bulk || p.type === ProductType.Retail);
+        // B2B bulk only - show all products (all go through negotiation now)
+        filtered = filtered.filter(p => p.type === ProductType.Bulk);
 
         filtered = filtered.filter(p => p.price >= priceRange.min && p.price <= priceRange.max);
 
@@ -132,22 +129,26 @@ export const BuyerView = ({
     }
 
     return (
-        <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 font-display -m-4 sm:-m-6 lg:-m-8">
-            {/* Top Navigation Bar */}
-            <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-4 lg:px-8 py-3 shadow-sm">
-                <div className="max-w-[1600px] mx-auto w-full flex flex-col lg:flex-row items-center justify-between gap-4">
+        <div className="min-h-screen flex flex-col bg-gray-50 text-gray-900 font-display -mx-4 -my-4 sm:-mx-6 sm:-my-6 lg:-mx-8 lg:-my-8">
+            {/* Top Navigation Bar - Mobile First */}
+            <header className="sticky top-0 z-50 bg-white border-b border-gray-200 px-3 sm:px-4 lg:px-8 py-2 sm:py-3 shadow-sm">
+                <div className="max-w-7xl mx-auto w-full flex flex-col lg:flex-row items-center justify-between gap-2 sm:gap-4">
                     {/* Logo & Brand */}
-                    <div className="flex items-center gap-4 w-full lg:w-auto justify-between lg:justify-start">
-                        <div className="flex items-center gap-3 text-gray-900 cursor-pointer">
-                            <span className="material-symbols-outlined text-4xl text-[#2f7f33]">agriculture</span>
-                            <h1 className="text-2xl font-bold tracking-tight">Anna Bazaar</h1>
+                    <div className="flex items-center gap-2 sm:gap-4 w-full lg:w-auto justify-between lg:justify-start">
+                        <div className="flex items-center gap-2 sm:gap-3 text-gray-900 cursor-pointer">
+                            <span className="material-symbols-outlined text-2xl sm:text-3xl lg:text-4xl text-[#2f7f33]">agriculture</span>
+                            <h1 className="text-lg sm:text-xl lg:text-2xl font-bold tracking-tight">Anna Bazaar</h1>
                         </div>
+                        {/* Mobile Menu Button */}
+                        <button className="lg:hidden p-2 rounded-lg bg-gray-100 hover:bg-gray-200 transition-colors">
+                            <span className="material-symbols-outlined text-xl">menu</span>
+                        </button>
                     </div>
 
                     {/* Search & Location */}
-                    <div className="flex flex-1 items-center gap-4 w-full max-w-3xl">
-                        {/* Location Selector */}
-                        <button className="hidden md:flex items-center gap-2 whitespace-nowrap bg-gray-100 hover:bg-gray-200 px-4 h-12 rounded-lg border border-gray-200 transition-colors">
+                    <div className="flex flex-1 items-center gap-2 sm:gap-4 w-full max-w-3xl">
+                        {/* Location Selector - Hidden on mobile */}
+                        <button className="hidden md:flex items-center gap-2 whitespace-nowrap bg-gray-100 hover:bg-gray-200 px-3 lg:px-4 h-10 lg:h-12 rounded-lg border border-gray-200 transition-colors">
                             <span className="material-symbols-outlined text-[#2f7f33]">location_on</span>
                             <div className="flex flex-col items-start leading-tight">
                                 <span className="text-xs text-gray-500 font-medium">Deliver to</span>
@@ -157,13 +158,13 @@ export const BuyerView = ({
                         </button>
 
                         {/* Search Bar */}
-                        <label className="flex w-full items-center h-12 rounded-lg bg-gray-100 border border-gray-200 focus-within:border-[#2f7f33] focus-within:ring-2 focus-within:ring-[#2f7f33]/20 overflow-hidden transition-all shadow-sm">
-                            <div className="flex items-center justify-center pl-4 text-gray-500">
-                                <span className="material-symbols-outlined">search</span>
+                        <label className="flex w-full items-center h-10 sm:h-12 rounded-lg bg-gray-100 border border-gray-200 focus-within:border-[#2f7f33] focus-within:ring-2 focus-within:ring-[#2f7f33]/20 overflow-hidden transition-all shadow-sm">
+                            <div className="flex items-center justify-center pl-3 sm:pl-4 text-gray-500">
+                                <span className="material-symbols-outlined text-xl sm:text-2xl">search</span>
                             </div>
                             <input 
-                                className="w-full h-full bg-transparent border-none focus:ring-0 px-4 text-base placeholder:text-gray-400 text-gray-900" 
-                                placeholder="Search for produce..."
+                                className="w-full h-full bg-transparent border-none focus:ring-0 px-2 sm:px-4 text-sm sm:text-base placeholder:text-gray-400 text-gray-900" 
+                                placeholder="Search..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                             />
@@ -212,9 +213,9 @@ export const BuyerView = ({
                 </div>
             </header>
 
-            <div className="flex flex-1 w-full max-w-[1600px] mx-auto">
-                {/* Left Sidebar (Filters) */}
-                <aside className="hidden lg:flex flex-col w-72 shrink-0 border-r border-gray-200 bg-white p-6 h-[calc(100vh-80px)] sticky top-[80px] overflow-y-auto">
+            <div className="flex flex-1 w-full max-w-7xl mx-auto px-0 sm:px-2 lg:px-4">
+                {/* Left Sidebar (Filters) - Hidden on mobile */}
+                <aside className="hidden lg:flex flex-col w-64 xl:w-72 shrink-0 border-r border-gray-200 bg-white p-4 xl:p-6 h-[calc(100vh-70px)] sticky top-[70px] overflow-y-auto">
                     <div className="flex items-center justify-between mb-6">
                         <h2 className="text-lg font-bold flex items-center gap-2 text-gray-900">
                             <span className="material-symbols-outlined text-[#2f7f33]">filter_alt</span>
@@ -322,14 +323,14 @@ export const BuyerView = ({
                 </aside>
 
                 {/* Main Content Area */}
-                <main className="flex-1 p-4 lg:p-8 overflow-x-hidden">
-                    {/* Quick Filter Chips */}
-                    <div className="flex gap-3 pb-6 overflow-x-auto">
+                <main className="flex-1 p-3 sm:p-4 lg:p-6 xl:p-8 overflow-x-hidden">
+                    {/* Quick Filter Chips - Horizontal scroll on mobile */}
+                    <div className="flex gap-2 sm:gap-3 pb-4 sm:pb-6 overflow-x-auto scrollbar-hide -mx-3 px-3 sm:mx-0 sm:px-0">
                         {categoryChips.map(chip => (
                             <button 
                                 key={chip.id}
                                 onClick={() => setFilterCategory(chip.id as ProductCategory | 'All')}
-                                className={`flex shrink-0 items-center justify-center gap-x-2 rounded-full h-10 pl-3 pr-5 font-medium transition-all active:scale-95 ${
+                                className={`flex shrink-0 items-center justify-center gap-x-1.5 sm:gap-x-2 rounded-full h-8 sm:h-10 pl-2.5 sm:pl-3 pr-3 sm:pr-5 text-xs sm:text-sm font-medium transition-all active:scale-95 ${
                                     filterCategory === chip.id 
                                         ? 'bg-[#2f7f33] text-white shadow-md' 
                                         : 'bg-white border border-gray-200 hover:border-[#2f7f33] text-gray-600 hover:text-[#2f7f33]'
@@ -342,9 +343,9 @@ export const BuyerView = ({
                     </div>
 
                     {/* Results Header */}
-                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2 sm:gap-4 mb-4 sm:mb-6">
                         <div>
-                            <h2 className="text-xl font-bold text-gray-900">
+                            <h2 className="text-lg sm:text-xl font-bold text-gray-900">
                                 {filterCategory === 'All' ? 'All Products' : filterCategory}
                                 {' - Bulk Lots'}
                             </h2>
@@ -364,8 +365,8 @@ export const BuyerView = ({
                         </div>
                     </div>
 
-                    {/* Listings Grid */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {/* Listings Grid - Mobile First: 1 col -> 2 col -> 3 col -> 4 col */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
                         {/* Show skeletons while loading */}
                         {isLoadingProducts && (
                             <>
@@ -399,11 +400,10 @@ export const BuyerView = ({
                                                 <span className="material-symbols-outlined text-[16px]">{gradeInfo.icon}</span>
                                                 AI Grade {gradeInfo.grade}
                                             </span>
-                                            {product.type === ProductType.Bulk && (
-                                                <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
-                                                    Negotiable
-                                                </span>
-                                            )}
+                                            {/* B2B Platform - All products are negotiable bulk lots */}
+                                            <span className="bg-blue-600 text-white text-xs font-bold px-3 py-1.5 rounded-full shadow-sm">
+                                                Bulk Lot - Negotiable
+                                            </span>
                                         </div>
                                         <button 
                                             onClick={(e) => { e.stopPropagation(); onToggleWishlist(product.id); }}

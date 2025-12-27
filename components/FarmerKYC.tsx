@@ -259,7 +259,7 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
 
             <div className="relative min-h-full w-full flex flex-col">
                 {/* Header */}
-                <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-white/40 px-4 md:px-10 py-4 shadow-sm">
+                <header className="sticky top-0 z-50 bg-white/70 backdrop-blur-xl border-b border-white/40 px-3 sm:px-4 md:px-10 py-3 sm:py-4 shadow-sm">
                     <div className="max-w-7xl mx-auto flex items-center justify-between">
                         <div className="flex items-center gap-4">
                             {(step > 1 || !required) && (
@@ -270,11 +270,11 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                                     <span className="material-symbols-outlined text-3xl">arrow_back</span>
                                 </button>
                             )}
-                            <div className="flex items-center gap-3">
-                                <div className="relative h-10 w-10 flex items-center justify-center bg-gradient-to-br from-primary to-green-600 text-white rounded-xl shadow-lg">
-                                    <span className="material-symbols-outlined text-2xl">agriculture</span>
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <div className="relative h-8 w-8 sm:h-10 sm:w-10 flex items-center justify-center bg-gradient-to-br from-primary to-green-600 text-white rounded-lg sm:rounded-xl shadow-lg">
+                                    <span className="material-symbols-outlined text-xl sm:text-2xl">agriculture</span>
                                 </div>
-                                <h2 className="text-stone-900 text-2xl font-black tracking-tight hidden sm:block">Anna Bazaar</h2>
+                                <h2 className="text-stone-900 text-lg sm:text-xl lg:text-2xl font-black tracking-tight hidden sm:block">Anna Bazaar</h2>
                             </div>
                         </div>
                         <div className="flex items-center gap-4">
@@ -292,7 +292,7 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                 </header>
 
                 {/* Main Content */}
-                <main className="flex-1 w-full max-w-5xl mx-auto px-4 py-8 md:py-12 flex flex-col items-center gap-10 pb-32">
+                <main className="flex-1 w-full max-w-5xl mx-auto px-3 sm:px-4 py-4 sm:py-6 md:py-12 flex flex-col items-center gap-6 sm:gap-8 lg:gap-10 pb-24 sm:pb-32">
                     {/* Neon Progress Stepper */}
                     <NeonProgressBar steps={KYC_STEPS} currentStep={step} className="mt-6" />
 
@@ -311,25 +311,25 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                                     <div className="absolute top-1/2 -right-20 w-64 h-64 bg-primary/15 rounded-full blur-3xl animate-float pointer-events-none" style={{ animationDelay: '2s' }} />
                                     
                                     {/* Glass card */}
-                                    <div className="relative bg-white/65 backdrop-blur-2xl rounded-[2.5rem] p-1 border border-white/80 overflow-hidden shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)]">
+                                    <div className="relative bg-white/65 backdrop-blur-xl sm:backdrop-blur-2xl rounded-2xl sm:rounded-[2.5rem] p-0.5 sm:p-1 border border-white/80 overflow-hidden shadow-[0_10px_30px_-12px_rgba(0,0,0,0.1)] sm:shadow-[0_20px_50px_-12px_rgba(0,0,0,0.1)]">
                                         {/* Inner highlight gradient */}
                                         <div className="absolute inset-0 bg-gradient-to-b from-white/60 via-white/20 to-transparent pointer-events-none" />
                                         
-                                        <div className="relative bg-white/40 rounded-[2.3rem] p-6 md:p-12 backdrop-blur-xl z-10">
+                                        <div className="relative bg-white/40 rounded-xl sm:rounded-[2.3rem] p-4 sm:p-6 md:p-10 lg:p-12 backdrop-blur-xl z-10">
                                             {/* Header */}
-                                            <div className="text-center mb-10">
-                                                <h1 className="text-3xl md:text-5xl font-black mb-4 tracking-tight leading-tight">
+                                            <div className="text-center mb-6 sm:mb-8 lg:mb-10">
+                                                <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-black mb-2 sm:mb-3 lg:mb-4 tracking-tight leading-tight">
                                                     <span className="bg-gradient-to-r from-stone-900 via-primary to-sky-500 bg-clip-text text-transparent bg-[length:200%_200%] animate-shimmer">
                                                         Tell Us About Yourself
                                                     </span>
                                                 </h1>
-                                                <p className="text-lg md:text-2xl text-stone-700 font-bold max-w-md mx-auto leading-relaxed drop-shadow-sm">
+                                                <p className="text-base sm:text-lg md:text-xl lg:text-2xl text-stone-700 font-bold max-w-md mx-auto leading-relaxed drop-shadow-sm">
                                                     Your details help us serve you better.
                                                 </p>
                                             </div>
 
                                             {/* Profile Photo Upload */}
-                                            <div className="mb-12 flex flex-col items-center">
+                                            <div className="mb-8 sm:mb-10 lg:mb-12 flex flex-col items-center">
                                                 <input
                                                     ref={photoInputRef}
                                                     type="file"
@@ -342,7 +342,7 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                                                     onClick={() => photoInputRef.current?.click()}
                                                     className="group relative cursor-pointer"
                                                 >
-                                                    <div className="w-36 h-36 md:w-44 md:h-44 rounded-full bg-white/60 backdrop-blur-md flex flex-col items-center justify-center border-2 border-dashed border-primary/60 hover:border-primary transition-all duration-300 shadow-inner hover:shadow-[0_0_25px_rgba(19,236,30,0.3)] overflow-hidden relative z-10">
+                                                    <div className="w-28 h-28 sm:w-36 sm:h-36 md:w-40 lg:w-44 md:h-40 lg:h-44 rounded-full bg-white/60 backdrop-blur-md flex flex-col items-center justify-center border-2 border-dashed border-primary/60 hover:border-primary transition-all duration-300 shadow-inner hover:shadow-[0_0_25px_rgba(19,236,30,0.3)] overflow-hidden relative z-10">
                                                         {personalInfo.photoPreview ? (
                                                             <img 
                                                                 src={personalInfo.photoPreview} 
@@ -367,14 +367,14 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                                                 </button>
                                             </div>
 
-                                            <form className="space-y-8" onSubmit={(e) => e.preventDefault()}>
+                                            <form className="space-y-4 sm:space-y-6 lg:space-y-8" onSubmit={(e) => e.preventDefault()}>
                                                 {/* Full Name Input */}
                                                 <div className="group/input relative">
-                                                    <label className="block text-stone-500 font-extrabold text-xs uppercase tracking-widest mb-3 ml-4">Full Name</label>
+                                                    <label className="block text-stone-500 font-extrabold text-[10px] sm:text-xs uppercase tracking-widest mb-2 sm:mb-3 ml-2 sm:ml-4">Full Name</label>
                                                     <div className="relative transition-transform duration-300 group-hover/input:-translate-y-1">
-                                                        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none z-10">
-                                                            <div className="size-12 rounded-xl bg-gradient-to-br from-white to-stone-50 border border-white shadow-sm flex items-center justify-center text-stone-400 group-focus-within/input:text-primary group-focus-within/input:shadow-[0_0_10px_rgba(19,236,30,0.3)] transition-all duration-300">
-                                                                <span className="material-symbols-outlined text-3xl">person</span>
+                                                        <div className="absolute inset-y-0 left-0 pl-3 sm:pl-5 flex items-center pointer-events-none z-10">
+                                                            <div className="size-9 sm:size-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-white to-stone-50 border border-white shadow-sm flex items-center justify-center text-stone-400 group-focus-within/input:text-primary group-focus-within/input:shadow-[0_0_10px_rgba(19,236,30,0.3)] transition-all duration-300">
+                                                                <span className="material-symbols-outlined text-xl sm:text-3xl">person</span>
                                                             </div>
                                                         </div>
                                                         <input
@@ -382,7 +382,7 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                                                             name="fullName"
                                                             value={personalInfo.fullName}
                                                             onChange={handlePersonalInfoChange}
-                                                            className="w-full h-20 pl-20 pr-6 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/80 text-stone-800 font-black text-xl md:text-2xl placeholder:text-stone-400 placeholder:font-bold focus:ring-0 focus:bg-white/95 focus:border-primary/50 focus:shadow-[0_0_0_4px_rgba(19,236,30,0.15),0_10px_20px_-5px_rgba(0,0,0,0.05)] focus:-translate-y-0.5 transition-all shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),inset_0_2px_4px_0_rgba(255,255,255,0.5)]"
+                                                            className="w-full h-14 sm:h-16 lg:h-20 pl-14 sm:pl-20 pr-4 sm:pr-6 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-xl border border-white/80 text-stone-800 font-black text-base sm:text-lg md:text-xl lg:text-2xl placeholder:text-stone-400 placeholder:font-bold focus:ring-0 focus:bg-white/95 focus:border-primary/50 focus:shadow-[0_0_0_4px_rgba(19,236,30,0.15),0_10px_20px_-5px_rgba(0,0,0,0.05)] focus:-translate-y-0.5 transition-all shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),inset_0_2px_4px_0_rgba(255,255,255,0.5)]"
                                                             placeholder="Enter your full name"
                                                         />
                                                     </div>
@@ -390,11 +390,11 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
 
                                                 {/* Mobile Number Input */}
                                                 <div className="group/input relative">
-                                                    <label className="block text-stone-500 font-extrabold text-xs uppercase tracking-widest mb-3 ml-4">Mobile Number</label>
+                                                    <label className="block text-stone-500 font-extrabold text-[10px] sm:text-xs uppercase tracking-widest mb-2 sm:mb-3 ml-2 sm:ml-4">Mobile Number</label>
                                                     <div className="relative transition-transform duration-300 group-hover/input:-translate-y-1">
-                                                        <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none z-10">
-                                                            <div className="size-12 rounded-xl bg-gradient-to-br from-white to-stone-50 border border-white shadow-sm flex items-center justify-center text-stone-400 group-focus-within/input:text-primary group-focus-within/input:shadow-[0_0_10px_rgba(19,236,30,0.3)] transition-all duration-300">
-                                                                <span className="material-symbols-outlined text-3xl">smartphone</span>
+                                                        <div className="absolute inset-y-0 left-0 pl-3 sm:pl-5 flex items-center pointer-events-none z-10">
+                                                            <div className="size-9 sm:size-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-white to-stone-50 border border-white shadow-sm flex items-center justify-center text-stone-400 group-focus-within/input:text-primary group-focus-within/input:shadow-[0_0_10px_rgba(19,236,30,0.3)] transition-all duration-300">
+                                                                <span className="material-symbols-outlined text-xl sm:text-3xl">smartphone</span>
                                                             </div>
                                                         </div>
                                                         <input
@@ -402,20 +402,20 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                                                             name="mobile"
                                                             value={personalInfo.mobile}
                                                             onChange={handlePersonalInfoChange}
-                                                            className="w-full h-20 pl-20 pr-6 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/80 text-stone-800 font-black text-xl md:text-2xl placeholder:text-stone-400 placeholder:font-bold focus:ring-0 focus:bg-white/95 focus:border-primary/50 focus:shadow-[0_0_0_4px_rgba(19,236,30,0.15),0_10px_20px_-5px_rgba(0,0,0,0.05)] focus:-translate-y-0.5 transition-all shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),inset_0_2px_4px_0_rgba(255,255,255,0.5)]"
-                                                            placeholder="+91 Enter your mobile number"
+                                                            className="w-full h-14 sm:h-16 lg:h-20 pl-14 sm:pl-20 pr-4 sm:pr-6 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-xl border border-white/80 text-stone-800 font-black text-base sm:text-lg md:text-xl lg:text-2xl placeholder:text-stone-400 placeholder:font-bold focus:ring-0 focus:bg-white/95 focus:border-primary/50 focus:shadow-[0_0_0_4px_rgba(19,236,30,0.15),0_10px_20px_-5px_rgba(0,0,0,0.05)] focus:-translate-y-0.5 transition-all shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),inset_0_2px_4px_0_rgba(255,255,255,0.5)]"
+                                                            placeholder="+91 Mobile number"
                                                         />
                                                     </div>
                                                 </div>
 
                                                 {/* Date of Birth & Village Grid */}
-                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 lg:gap-8">
                                                     <div className="group/input relative">
-                                                        <label className="block text-stone-500 font-extrabold text-xs uppercase tracking-widest mb-3 ml-4">Date of Birth</label>
+                                                        <label className="block text-stone-500 font-extrabold text-[10px] sm:text-xs uppercase tracking-widest mb-2 sm:mb-3 ml-2 sm:ml-4">Date of Birth</label>
                                                         <div className="relative transition-transform duration-300 group-hover/input:-translate-y-1">
-                                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none z-10">
-                                                                <div className="size-12 rounded-xl bg-gradient-to-br from-white to-stone-50 border border-white shadow-sm flex items-center justify-center text-stone-400 group-focus-within/input:text-primary group-focus-within/input:shadow-[0_0_10px_rgba(19,236,30,0.3)] transition-all duration-300">
-                                                                    <span className="material-symbols-outlined text-3xl">calendar_month</span>
+                                                            <div className="absolute inset-y-0 left-0 pl-3 sm:pl-5 flex items-center pointer-events-none z-10">
+                                                                <div className="size-9 sm:size-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-white to-stone-50 border border-white shadow-sm flex items-center justify-center text-stone-400 group-focus-within/input:text-primary group-focus-within/input:shadow-[0_0_10px_rgba(19,236,30,0.3)] transition-all duration-300">
+                                                                    <span className="material-symbols-outlined text-xl sm:text-3xl">calendar_month</span>
                                                                 </div>
                                                             </div>
                                                             <input
@@ -423,17 +423,17 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                                                                 name="dateOfBirth"
                                                                 value={personalInfo.dateOfBirth}
                                                                 onChange={handlePersonalInfoChange}
-                                                                className="w-full h-20 pl-20 pr-6 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/80 text-stone-800 font-black text-xl md:text-2xl focus:ring-0 focus:bg-white/95 focus:border-primary/50 focus:shadow-[0_0_0_4px_rgba(19,236,30,0.15),0_10px_20px_-5px_rgba(0,0,0,0.05)] focus:-translate-y-0.5 transition-all shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),inset_0_2px_4px_0_rgba(255,255,255,0.5)] cursor-pointer"
+                                                                className="w-full h-14 sm:h-16 lg:h-20 pl-14 sm:pl-20 pr-4 sm:pr-6 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-xl border border-white/80 text-stone-800 font-black text-base sm:text-lg md:text-xl lg:text-2xl focus:ring-0 focus:bg-white/95 focus:border-primary/50 focus:shadow-[0_0_0_4px_rgba(19,236,30,0.15),0_10px_20px_-5px_rgba(0,0,0,0.05)] focus:-translate-y-0.5 transition-all shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),inset_0_2px_4px_0_rgba(255,255,255,0.5)] cursor-pointer"
                                                             />
                                                         </div>
                                                     </div>
 
                                                     <div className="group/input relative">
-                                                        <label className="block text-stone-500 font-extrabold text-xs uppercase tracking-widest mb-3 ml-4">Village / Locality</label>
+                                                        <label className="block text-stone-500 font-extrabold text-[10px] sm:text-xs uppercase tracking-widest mb-2 sm:mb-3 ml-2 sm:ml-4">Village / Locality</label>
                                                         <div className="relative transition-transform duration-300 group-hover/input:-translate-y-1">
-                                                            <div className="absolute inset-y-0 left-0 pl-5 flex items-center pointer-events-none z-10">
-                                                                <div className="size-12 rounded-xl bg-gradient-to-br from-white to-stone-50 border border-white shadow-sm flex items-center justify-center text-stone-400 group-focus-within/input:text-primary group-focus-within/input:shadow-[0_0_10px_rgba(19,236,30,0.3)] transition-all duration-300">
-                                                                    <span className="material-symbols-outlined text-3xl">home_pin</span>
+                                                            <div className="absolute inset-y-0 left-0 pl-3 sm:pl-5 flex items-center pointer-events-none z-10">
+                                                                <div className="size-9 sm:size-12 rounded-lg sm:rounded-xl bg-gradient-to-br from-white to-stone-50 border border-white shadow-sm flex items-center justify-center text-stone-400 group-focus-within/input:text-primary group-focus-within/input:shadow-[0_0_10px_rgba(19,236,30,0.3)] transition-all duration-300">
+                                                                    <span className="material-symbols-outlined text-xl sm:text-3xl">home_pin</span>
                                                                 </div>
                                                             </div>
                                                             <input
@@ -441,7 +441,7 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                                                                 name="village"
                                                                 value={personalInfo.village}
                                                                 onChange={handlePersonalInfoChange}
-                                                                className="w-full h-20 pl-20 pr-6 rounded-2xl bg-white/60 backdrop-blur-xl border border-white/80 text-stone-800 font-black text-xl md:text-2xl placeholder:text-stone-400 placeholder:font-bold focus:ring-0 focus:bg-white/95 focus:border-primary/50 focus:shadow-[0_0_0_4px_rgba(19,236,30,0.15),0_10px_20px_-5px_rgba(0,0,0,0.05)] focus:-translate-y-0.5 transition-all shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),inset_0_2px_4px_0_rgba(255,255,255,0.5)]"
+                                                                className="w-full h-14 sm:h-16 lg:h-20 pl-14 sm:pl-20 pr-4 sm:pr-6 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-xl border border-white/80 text-stone-800 font-black text-base sm:text-lg md:text-xl lg:text-2xl placeholder:text-stone-400 placeholder:font-bold focus:ring-0 focus:bg-white/95 focus:border-primary/50 focus:shadow-[0_0_0_4px_rgba(19,236,30,0.15),0_10px_20px_-5px_rgba(0,0,0,0.05)] focus:-translate-y-0.5 transition-all shadow-[0_4px_6px_-1px_rgba(0,0,0,0.02),inset_0_2px_4px_0_rgba(255,255,255,0.5)]"
                                                                 placeholder="Enter village"
                                                             />
                                                         </div>
@@ -454,40 +454,40 @@ export const FarmerKYC = ({ isOpen, currentUser, onClose, onComplete, required =
                             )}
 
                             {step === 2 && (
-                                <div className="bg-white/70 backdrop-blur-xl rounded-3xl shadow-xl border border-white/60 overflow-hidden">
-                                    <div className="p-6 md:p-10 flex flex-col items-center gap-8">
+                                <div className="bg-white/70 backdrop-blur-xl rounded-2xl sm:rounded-3xl shadow-xl border border-white/60 overflow-hidden">
+                                    <div className="p-4 sm:p-6 md:p-10 flex flex-col items-center gap-4 sm:gap-6 md:gap-8">
                                         <div className="text-center">
-                                            <h1 className="text-3xl md:text-4xl font-black text-stone-900 mb-3 tracking-tight">Verify Your Identity</h1>
-                                            <p className="text-lg text-stone-600 font-medium max-w-md mx-auto">
+                                            <h1 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-black text-stone-900 mb-2 sm:mb-3 tracking-tight">Verify Your Identity</h1>
+                                            <p className="text-sm sm:text-base lg:text-lg text-stone-600 font-medium max-w-md mx-auto">
                                                 Upload photos of your Aadhaar card and Kisan card to unlock selling features.
                                             </p>
                                         </div>
 
                                         {/* Visual Instructions */}
-                                        <div className="flex gap-8 justify-center w-full max-w-md">
-                                            <div className="flex flex-col items-center gap-2 text-center">
-                                                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center text-primary mb-1">
-                                                    <span className="material-symbols-outlined">wb_sunny</span>
+                                        <div className="flex gap-4 sm:gap-6 md:gap-8 justify-center w-full max-w-md">
+                                            <div className="flex flex-col items-center gap-1 sm:gap-2 text-center">
+                                                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-green-100 flex items-center justify-center text-primary mb-1">
+                                                    <span className="material-symbols-outlined text-lg sm:text-2xl">wb_sunny</span>
                                                 </div>
-                                                <span className="text-xs font-bold text-stone-800">Good Lighting</span>
+                                                <span className="text-[10px] sm:text-xs font-bold text-stone-800">Good Light</span>
                                             </div>
-                                            <div className="flex flex-col items-center gap-2 text-center opacity-60">
-                                                <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center text-red-500 mb-1">
-                                                    <span className="material-symbols-outlined">blur_off</span>
+                                            <div className="flex flex-col items-center gap-1 sm:gap-2 text-center opacity-60">
+                                                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-red-100 flex items-center justify-center text-red-500 mb-1">
+                                                    <span className="material-symbols-outlined text-lg sm:text-2xl">blur_off</span>
                                                 </div>
-                                                <span className="text-xs font-bold text-stone-800">No Blur</span>
+                                                <span className="text-[10px] sm:text-xs font-bold text-stone-800">No Blur</span>
                                             </div>
-                                            <div className="flex flex-col items-center gap-2 text-center opacity-60">
-                                                <div className="h-12 w-12 rounded-full bg-red-100 flex items-center justify-center text-red-500 mb-1">
-                                                    <span className="material-symbols-outlined">crop_free</span>
+                                            <div className="flex flex-col items-center gap-1 sm:gap-2 text-center opacity-60">
+                                                <div className="h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-red-100 flex items-center justify-center text-red-500 mb-1">
+                                                    <span className="material-symbols-outlined text-lg sm:text-2xl">crop_free</span>
                                                 </div>
-                                                <span className="text-xs font-bold text-stone-800">All Corners</span>
+                                                <span className="text-[10px] sm:text-xs font-bold text-stone-800">All Corners</span>
                                             </div>
                                         </div>
 
                                         {/* Aadhaar Upload */}
                                         <div className="w-full max-w-[480px]">
-                                            <label className="block text-stone-700 font-bold text-sm mb-3 ml-1">AADHAAR CARD (Front) *</label>
+                                            <label className="block text-stone-700 font-bold text-xs sm:text-sm mb-2 sm:mb-3 ml-1">AADHAAR CARD (Front) *</label>
                                             {documents.aadhaarPreview ? (
                                                 <div className="relative rounded-xl overflow-hidden border-2 border-primary bg-white shadow-lg">
                                                     <img src={documents.aadhaarPreview} alt="Aadhaar Preview" className="w-full h-48 object-cover" />

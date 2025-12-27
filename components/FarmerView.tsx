@@ -347,20 +347,20 @@ export const FarmerView = ({ products, negotiations, messages, currentUserId, cu
 
             <div className="flex h-full w-full relative">
                 {/* Sidebar */}
-                <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-80 lg:w-80 border-r border-white/50 bg-white/40 backdrop-blur-2xl p-6 overflow-y-auto shadow-card transform transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
-                    <div className="flex flex-col gap-10 min-h-full">
+                <aside className={`fixed lg:static inset-y-0 left-0 z-40 w-72 sm:w-80 lg:w-72 xl:w-80 border-r border-white/50 bg-white/40 backdrop-blur-xl lg:backdrop-blur-2xl p-4 sm:p-6 overflow-y-auto shadow-card transform transition-transform duration-300 ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'}`}>
+                    <div className="flex flex-col gap-6 sm:gap-10 min-h-full">
                         <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-4 group">
-                                <div className="relative flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-card transition-transform group-hover:scale-105">
-                                    <span className="material-symbols-outlined text-4xl">agriculture</span>
+                            <div className="flex items-center gap-3 sm:gap-4 group">
+                                <div className="relative flex items-center justify-center h-10 w-10 sm:h-14 sm:w-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-primary to-primary-dark text-white shadow-card transition-transform group-hover:scale-105">
+                                    <span className="material-symbols-outlined text-2xl sm:text-4xl">agriculture</span>
                                     <div className="absolute inset-0 rounded-2xl bg-white/20 blur-sm opacity-0 group-hover:opacity-100 transition-opacity"></div>
                                 </div>
                                 <div className="flex flex-col">
-                                    <h1 className="text-3xl font-display font-bold tracking-tight text-stone-900 relative">
+                                    <h1 className="text-xl sm:text-2xl lg:text-3xl font-display font-bold tracking-tight text-stone-900 relative">
                                         Anna Bazaar
                                         <span className="absolute -top-1 -right-2 h-2 w-2 bg-primary rounded-full animate-pulse"></span>
                                     </h1>
-                                    <span className="text-xs font-mono text-primary font-bold tracking-widest uppercase">Farmer Mode</span>
+                                    <span className="text-[10px] sm:text-xs font-mono text-primary font-bold tracking-widest uppercase">Farmer Mode</span>
                                 </div>
                             </div>
 
@@ -439,18 +439,18 @@ export const FarmerView = ({ products, negotiations, messages, currentUserId, cu
 
                 {/* Main */}
                 <main className="flex-1 flex flex-col h-full overflow-hidden relative lg:ml-0">
-                    <header className="flex flex-col md:flex-row md:items-center justify-between gap-4 p-4 md:px-8 md:py-6 shrink-0 z-10 bg-gradient-to-b from-white/40 to-transparent backdrop-blur-sm">
-                        <div className="flex flex-col gap-2 relative">
+                    <header className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-4 p-3 sm:p-4 md:px-6 lg:px-8 md:py-4 lg:py-6 shrink-0 z-10 bg-gradient-to-b from-white/40 to-transparent backdrop-blur-sm">
+                        <div className="flex flex-col gap-1 sm:gap-2 relative">
                             <div className="absolute -left-10 -top-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl pointer-events-none"></div>
-                            <div className="flex items-center gap-3">
-                                <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-3 rounded-2xl bg-white/60 backdrop-blur-md text-stone-900 shadow-card border border-white/50">
-                                    <span className="material-symbols-outlined text-3xl">menu</span>
+                            <div className="flex items-center gap-2 sm:gap-3">
+                                <button onClick={() => setIsSidebarOpen(true)} className="lg:hidden p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-white/60 backdrop-blur-md text-stone-900 shadow-card border border-white/50">
+                                    <span className="material-symbols-outlined text-xl sm:text-2xl lg:text-3xl">menu</span>
                                 </button>
-                                <h2 className="text-3xl md:text-4xl font-display font-bold text-stone-900 tracking-tight">
+                                <h2 className="text-xl sm:text-2xl md:text-3xl lg:text-4xl font-display font-bold text-stone-900 tracking-tight">
                                     Namaste, {displayName}
                                 </h2>
                             </div>
-                            <div className="flex items-center gap-3 text-stone-600 font-medium text-base bg-white/30 w-fit px-4 py-1.5 rounded-full border border-white/40 backdrop-blur-sm">
+                            <div className="flex items-center gap-2 sm:gap-3 text-stone-600 font-medium text-xs sm:text-sm lg:text-base bg-white/30 w-fit px-2 sm:px-3 lg:px-4 py-1 sm:py-1.5 rounded-full border border-white/40 backdrop-blur-sm">
                                 <span className="material-symbols-outlined text-primary">calendar_month</span>
                                 <span>{todayLabel}</span>
                                 <span className="w-1 h-4 bg-stone-300 rounded-full mx-1"></span>
@@ -458,24 +458,24 @@ export const FarmerView = ({ products, negotiations, messages, currentUserId, cu
                             </div>
                         </div>
 
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-2 sm:gap-4">
                             <button
                                 onClick={() => setShowUploadPage(true)}
-                                className="relative group overflow-hidden px-8 py-4 rounded-full bg-gradient-to-r from-primary to-primary-light text-white shadow-card transition-all duration-300 hover:-translate-y-0.5"
+                                className="relative group overflow-hidden px-4 sm:px-6 lg:px-8 py-2.5 sm:py-3 lg:py-4 rounded-xl sm:rounded-full bg-gradient-to-r from-primary to-primary-light text-white shadow-card transition-all duration-300 hover:-translate-y-0.5"
                             >
                                 <div className="absolute inset-0 bg-white/20 group-hover:translate-x-full transition-transform duration-700 ease-in-out skew-x-12 -translate-x-full"></div>
-                                <div className="flex items-center gap-3 relative z-10">
-                                    <span className="material-symbols-outlined text-3xl font-bold">add_circle</span>
-                                    <span className="text-xl font-bold tracking-wide">New Listing</span>
+                                <div className="flex items-center gap-2 sm:gap-3 relative z-10">
+                                    <span className="material-symbols-outlined text-xl sm:text-2xl lg:text-3xl font-bold">add_circle</span>
+                                    <span className="text-sm sm:text-base lg:text-xl font-bold tracking-wide">New Listing</span>
                                 </div>
                             </button>
                         </div>
                     </header>
 
-                    <div className="flex-1 overflow-y-auto p-4 md:px-8 md:pb-16 scroll-smooth">
-                        <div className="max-w-[1600px] mx-auto flex flex-col gap-8">
-                            {/* Top grid */}
-                            <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+                    <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:px-6 lg:px-8 md:pb-12 lg:pb-16 scroll-smooth">
+                        <div className="max-w-7xl mx-auto flex flex-col gap-4 sm:gap-6 lg:gap-8">
+                            {/* Top grid - Stack on mobile, side by side on xl */}
+                            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 sm:gap-6">
                                 {/* Weather Widget */}
                                 <WeatherWidget
                                     weather={dashboardWeather}
@@ -485,7 +485,7 @@ export const FarmerView = ({ products, negotiations, messages, currentUserId, cu
                                 />
 
                                 {/* Live Mandi Rates (match screenshot style) */}
-                                <div className="xl:col-span-8 rounded-[2rem] p-5 md:p-6 overflow-hidden relative bg-white/70 backdrop-blur-xl border border-white/70 shadow-card">
+                                <div className="lg:col-span-8 rounded-2xl sm:rounded-[2rem] p-4 sm:p-5 md:p-6 overflow-hidden relative bg-white/70 backdrop-blur-xl border border-white/70 shadow-card">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
                                             <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
