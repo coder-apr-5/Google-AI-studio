@@ -24,11 +24,15 @@ export class FirestoreErrorBoundary extends Component<
     ErrorBoundaryProps,
     ErrorBoundaryState
 > {
-    state: ErrorBoundaryState = {
-        hasError: false,
-        error: null,
-        isIndexError: false,
-    };
+    constructor(props: ErrorBoundaryProps) {
+        super(props);
+        this.state = {
+            hasError: false,
+            error: null,
+            isIndexError: false,
+        };
+        this.handleRetry = this.handleRetry.bind(this);
+    }
 
     static getDerivedStateFromError(error: Error): ErrorBoundaryState {
         const msg = error?.message || '';
@@ -55,13 +59,13 @@ export class FirestoreErrorBoundary extends Component<
         }
     }
 
-    handleRetry = (): void => {
+    handleRetry(): void {
         this.setState({
             hasError: false,
             error: null,
             isIndexError: false,
         });
-    };
+    }
 
     render(): ReactNode {
         const { hasError, isIndexError, error } = this.state;

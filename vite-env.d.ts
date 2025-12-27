@@ -9,6 +9,9 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_APP_ID: string;
   readonly VITE_FIREBASE_MEASUREMENT_ID?: string;
   readonly VITE_WEATHER_API_KEY?: string;
+  readonly VITE_DODO_API_KEY?: string;
+  readonly VITE_DODO_MODE?: 'test' | 'live';
+  readonly VITE_GEMINI_API_KEY?: string;
 }
 
 interface ImportMeta {
